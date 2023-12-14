@@ -16,7 +16,7 @@ The destination folder can be the same as the source folder, in which case the o
 Options:
 - Look into subdirectories recursively (process the entire tree); recommended: `-r`, `--recursive`
 - Reduce both image dimensions by half: `--resize`
-- JPEG quality, on a scale from 0 (worst) to 95 (best); the default is 75; ignored in case of PNGs: `--quality [QUALITY]`
+- JPEG quality, on a scale from 0 (worst) to 95 (best); the default is 75; ignored in case of PNGs: `--quality <QUALITY>`
 
 Written in Rust 1.74.1.  
 Tested on Windows 11 with JPEGs and PNGs.  
@@ -26,7 +26,7 @@ Other OSes haven't been tested, but should work.
 ## Running the Application
 ### Windows
 Go to the directory with the executable and run the program run as:  
-`reduce.exe <source_folder> <destination_folder> [options]`
+`reduce_image_size.exe <source_folder> <destination_folder> [options]`
 
 Or, provide full path to the program.
 
