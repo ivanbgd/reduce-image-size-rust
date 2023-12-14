@@ -1,26 +1,21 @@
 //! The program's entry point.
 
 use clap::Parser;
+use reduce_image_size::cli::Args;
+// use reduce_image_size::logic::process_images;
 
-// use reduce_image_size::logic::main_loop;
-
-/// Simple program to greet a person
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Name of the person to greet
-    #[arg(short, long)]
-    name: String,
-
-    /// Number of times to greet
-    #[arg(short, long, default_value_t = 1)]
-    count: u8,
-}
-
+/// The program's entry point.
 fn main() {
     let args = Args::parse();
+    let src_dir = args.src_dir;
+    let dst_dir = args.dst_dir;
+    let recursive = args.recursive;
+    let resize = args.resize;
+    let quality = args.quality;
 
-    for _ in 0..args.count {
-        println!("Hello {}!", args.name)
-    }
+    println!(
+        "{}, {}, {recursive}, {resize}, {quality}",
+        src_dir.display(),
+        dst_dir.display()
+    );
 }
