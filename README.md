@@ -25,7 +25,7 @@ Other OSes haven't been tested, but should work.
 
 ## Running the Application
 ### Windows
-Go to the directory with the executable and run the program run as:  
+Go to the directory with the executable and run the program as:  
 `reduce_image_size.exe <source_folder> <destination_folder> [options]`
 
 Or, provide full path to the program.
