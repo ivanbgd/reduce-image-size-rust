@@ -15,3 +15,4 @@ name = "reduce_image_size"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+walkdir = "2"
