@@ -1,5 +1,6 @@
 use crate::constants::QUALITY;
 use clap::Parser;
+use std::path::PathBuf;
 
 /// Reduces size of images in a folder (and optionally sub-folders, recursively)
 #[derive(Parser)]
@@ -7,11 +8,11 @@ use clap::Parser;
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     /// Path to source folder with original images
-    pub src_dir: std::path::PathBuf,
+    pub src_dir: PathBuf,
 
     /// Path to destination folder for reduced-size copies of original images;
     /// can be the same as source, in which case source images are overwritten
-    pub dst_dir: std::path::PathBuf,
+    pub dst_dir: PathBuf,
 
     /// Look recursively in sub-folders
     #[arg(short, long)]

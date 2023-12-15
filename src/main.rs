@@ -3,6 +3,8 @@
 use clap::Parser;
 use reduce_image_size::cli::Args;
 use reduce_image_size::logic::process_images;
+use std::fs;
+use std::path::Path;
 use std::time::Instant;
 
 /// The program's entry point.
@@ -22,6 +24,16 @@ fn main() {
         src_dir.display(),
         dst_dir.display()
     );
+
+    if Path::new(&dst_dir).is_file() {
+        println!(
+            "\"{}\" exists and is a file! Provide a proper target directory.",
+            dst_dir.display()
+        );
+        return;
+    }
+
+    fs::create_dir_all(dst_dir).unwrap();
 
     process_images();
 
