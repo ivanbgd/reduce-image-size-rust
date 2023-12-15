@@ -20,7 +20,7 @@ fn main() {
 
     // /// REMOVE
     println!(
-        "{}, {}, {recursive}, {resize}, {quality}",
+        "{}, {}, {recursive}, {resize}, {quality}\n",
         src_dir.display(),
         dst_dir.display()
     );
@@ -33,9 +33,9 @@ fn main() {
         return;
     }
 
-    fs::create_dir_all(dst_dir).unwrap();
+    fs::create_dir_all(&dst_dir).unwrap();
 
-    process_images();
+    process_images(src_dir, dst_dir, recursive, resize, quality);
 
     println!("\nTook {:.3?} to complete.", start.elapsed());
 }
