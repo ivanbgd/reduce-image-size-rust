@@ -3,15 +3,114 @@ use std::io::Cursor;
 use std::io::{stdout, Write};
 use std::path::PathBuf;
 
-use image::codecs::jpeg::JpegEncoder;
-use image::io::Reader as ImageReader;
-use image::{GenericImageView, ImageBuffer, ImageDecoder, ImageEncoder, ImageFormat};
-// use walkdir::WalkDir;
+// use image::codecs::jpeg::JpegEncoder;
+// use image::io::Reader as ImageReader;
+// use image::{GenericImageView, ImageBuffer, ImageDecoder, ImageEncoder, ImageFormat};
+// use image::RgbImage;
+use glob::{glob, glob_with, MatchOptions};
+use globset::{Glob, GlobBuilder, GlobSetBuilder};
+use walkdir::WalkDir;
 
 fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: bool, quality: u8) {
+    const PATTERNS1: [&str; 3] = ["*.jpg", "*.jpeg", "*.png"];
+    const PATTERNS2: &str = "*.{jpg,jpeg,png}";
+    const PATTERNS_REC: [&str; 3] = ["**/*.jpg", "**/*.jpeg", "**/*.png"];
+    const PATTERNS_NON_REC: [&str; 3] = ["*.jpg", "*.jpeg", "*.png"];
+    const PATTERN_REC: &str = "**/*.jp*g";
+    const PATTERN_NON_REC: &str = "*.jp*g";
+
+    // Recursive
     // for entry in WalkDir::new(src_dir).into_iter().filter_map(|e| e.ok()) {
-    //     println!("{}", entry.path().display()); // ///
-    // }
+    for entry in WalkDir::new(&src_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        println!("{}", entry.path().display()); // ///
+    }
+    println!();
+
+    // Non-recursive
+    for entry in WalkDir::new(&src_dir)
+        .min_depth(0)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        println!("{}", entry.path().display()); // ///
+    }
+    println!();
+
+    let options = MatchOptions {
+        case_sensitive: false,
+        ..Default::default()
+    };
+
+    // Recursive
+    for entry in glob_with(
+        format!("{}/{}", src_dir.display(), PATTERN_REC).as_str(),
+        options,
+    )
+    .unwrap()
+    .filter_map(Result::ok)
+    .filter(|e| e.is_file())
+    {
+        println!("{}", entry.display());
+    }
+    println!();
+
+    // Non-recursive
+    for entry in glob_with(
+        format!("{}/{}", src_dir.display(), PATTERN_NON_REC).as_str(),
+        options,
+    )
+    .unwrap()
+    .filter_map(Result::ok)
+    .filter(|e| e.is_file())
+    {
+        println!("{}", entry.display());
+    }
+    println!();
+
+    // Recursive
+    let mut builder = GlobSetBuilder::new();
+    for pattern in PATTERNS1 {
+        builder.add(
+            GlobBuilder::new(pattern)
+                .case_insensitive(true)
+                .build()
+                .unwrap(),
+        );
+    }
+    let glob_set = builder.build().unwrap();
+    for entry in WalkDir::new(&src_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        if glob_set.is_match(entry.path()) {
+            println!("{}", entry.path().display()); // ///
+        }
+    }
+    println!();
+
+    // Recursive
+    let _glob = GlobBuilder::new(PATTERNS2)
+        .case_insensitive(true)
+        .build()
+        .unwrap()
+        .compile_matcher();
+    for entry in WalkDir::new(&src_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        if _glob.is_match(entry.path()) {
+            println!("{}", entry.path().display()); // ///
+        }
+    }
+    println!();
 
     // let cont = WalkDir::new(src_dir);
     // println!(
@@ -19,8 +118,6 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     //     cont.into_iter().filter_map(|e| e.ok()).collect::<Vec<_>>()
     // );
 
-    // //TODO: Try out `glob`!
-    //
     // // TODO: Don't collect! Also, convert to Path!
     // let src_paths = match recursive {
     //     true => WalkDir::new(src_dir)
@@ -56,39 +153,17 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     //     .expect("Failed to write to stdout.");
     // }
 
-    let src_path = "c:/sl/Slike/Lj/IMG_20220620_174403.jpg";
-
-    // let img = image::open(src_path).unwrap();
-    // println!("dimensions {:?}", img.dimensions());
-    // println!("{:?}", img.color());
-    // img.save("c:/dst/KopijeSlika/test.jpg").unwrap();
-
-    let mut default = vec![];
-    let img = ImageReader::open(src_path).unwrap().decode().unwrap();
-    // let img = ImageDecoder::read_image(default);
-    println!("dimensions {:?}", img.dimensions());
-    println!("{:?}", img.color());
-    // img.write_to(&mut Cursor::new(&mut default), ImageFormat::Jpeg).unwrap();
-
-    let (w, h) = img.dimensions();
-    let color = img.color();
-    // let output = ImageBuffer::new(w, h).into_vec();
-    // let mut buffer = File::create("c:/dst/KopijeSlika/test2.jpg").unwrap();
-    // let mut writer = Write::write(&mut buffer, &mut output);
-    // let encoder = JpegEncoder::new_with_quality(&mut writer, 70);
-
-    let writer = &mut Cursor::new(&mut default);
-    let encoder = JpegEncoder::new_with_quality(writer, 10);
-
-    // encoder
-    //     .encode(img.into_bytes().as_slice(), w, h, color)
-    //     .unwrap();
-    // encoder.encode_image(&img).unwrap();
-    // encoder.write_image()
-
-    img.write_with_encoder(encoder).unwrap();
-
-    img.save("c:/dst/KopijeSlika/test2.jpg").unwrap();
+    // let src_path = "c:/sl/Slike/Lj/IMG_20220620_174403.jpg";
+    // // let src_path = "c:/sl/Slike/pngs/pngwing.com.png";
+    //
+    // let jpeg_data = std::fs::read(src_path).unwrap();
+    // let image: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
+    // let jpeg_data = turbojpeg::compress_image(&image, 75, turbojpeg::Subsamp::Sub2x2).unwrap();
+    // std::fs::write(
+    //     std::env::temp_dir().join("c:/dst/KopijeSlika/test2.jpg"),
+    //     &jpeg_data,
+    // )
+    // .unwrap();
 }
 
 fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: u8) {}

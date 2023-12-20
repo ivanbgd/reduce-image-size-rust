@@ -16,5 +16,8 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+glob = "0.3.1"
+globset = "0.4"
 image = "0.24.7"
+turbojpeg = {version = "0.5", features = ["image"]}
 walkdir = "2"
