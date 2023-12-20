@@ -1,11 +1,13 @@
 //! The program's entry point.
 
-use clap::Parser;
-use reduce_image_size::cli::Args;
-use reduce_image_size::logic::process_images;
 use std::fs;
 use std::path::Path;
 use std::time::Instant;
+
+use clap::Parser;
+
+use reduce_image_size::cli::Args;
+use reduce_image_size::logic::process_images;
 
 /// The program's entry point.
 fn main() {

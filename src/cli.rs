@@ -1,6 +1,8 @@
-use crate::constants::QUALITY;
-use clap::Parser;
 use std::path::PathBuf;
+
+use clap::Parser;
+
+use crate::constants::QUALITY;
 
 /// Reduces size of images in a folder (and optionally sub-folders, recursively)
 #[derive(Parser)]
