@@ -1,14 +1,8 @@
-use std::fs::File;
-use std::io::Cursor;
 use std::io::{stdout, Write};
 use std::path::PathBuf;
 
-// use image::codecs::jpeg::JpegEncoder;
-// use image::io::Reader as ImageReader;
-// use image::{GenericImageView, ImageBuffer, ImageDecoder, ImageEncoder, ImageFormat};
-// use image::RgbImage;
-use glob::{glob, glob_with, MatchOptions};
-use globset::{Glob, GlobBuilder, GlobSetBuilder};
+use glob::{glob_with, MatchOptions};
+use globset::{GlobBuilder, GlobSetBuilder};
 use walkdir::WalkDir;
 
 fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: bool, quality: u8) {
@@ -20,7 +14,6 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     const PATTERN_NON_REC: &str = "*.jp*g";
 
     // Recursive
-    // for entry in WalkDir::new(src_dir).into_iter().filter_map(|e| e.ok()) {
     for entry in WalkDir::new(&src_dir)
         .into_iter()
         .filter_map(Result::ok)
@@ -73,7 +66,6 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     }
     println!();
 
-    // Recursive
     let mut builder = GlobSetBuilder::new();
     for pattern in PATTERNS1 {
         builder.add(
@@ -84,6 +76,8 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
         );
     }
     let glob_set = builder.build().unwrap();
+
+    // Recursive
     for entry in WalkDir::new(&src_dir)
         .into_iter()
         .filter_map(Result::ok)
@@ -95,13 +89,42 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     }
     println!();
 
-    // Recursive
+    // Non-recursive
+    for entry in WalkDir::new(&src_dir)
+        .min_depth(0)
+        .max_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        if glob_set.is_match(entry.path()) {
+            println!("{}", entry.path().display()); // ///
+        }
+    }
+    println!();
+
     let _glob = GlobBuilder::new(PATTERNS2)
         .case_insensitive(true)
         .build()
         .unwrap()
         .compile_matcher();
+
+    // Recursive
     for entry in WalkDir::new(&src_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+    {
+        if _glob.is_match(entry.path()) {
+            println!("{}", entry.path().display()); // ///
+        }
+    }
+    println!();
+
+    // Non-recursive
+    for entry in WalkDir::new(&src_dir)
+        .min_depth(0)
+        .max_depth(1)
         .into_iter()
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_file())
