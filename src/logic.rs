@@ -2,7 +2,7 @@ use std::io::{stdout, Write};
 use std::path::PathBuf;
 
 use globset::{GlobBuilder, GlobMatcher};
-use pathdiff::diff_utf8_paths;
+use pathdiff::diff_paths;
 use walkdir::WalkDir;
 
 use crate::constants::PATTERNS;
@@ -34,8 +34,7 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     for src_path in get_file_list(&src_dir, recursive) {
         if glob.is_match(src_path.path()) {
             let dst_path = dst_dir.as_path().join(
-                diff_utf8_paths(src_path.path().to_str().unwrap(), src_dir.to_str().unwrap())
-                    .unwrap(),
+                diff_paths(src_path.path().to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
             );
 
             writeln!(
