@@ -28,5 +28,5 @@ pub struct Args {
     /// ignored in case of PNGs
     #[arg(short, long, default_value_t = QUALITY,
     value_parser = clap::value_parser!(u8).range(1..=100))]
-    pub quality: u8,
+    pub quality: i32,
 }

@@ -27,7 +27,13 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: bool, quality: u8) {
+fn different_paths(
+    src_dir: PathBuf,
+    dst_dir: PathBuf,
+    recursive: bool,
+    resize: bool,
+    quality: i32,
+) {
     let glob = get_glob();
     let mut lock = stdout().lock();
 
@@ -53,7 +59,7 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     // let jpeg_data = std::fs::read(src_path).unwrap();
     // let image: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
     // let jpeg_data =
-    //     turbojpeg::compress_image(&image, quality as i32, turbojpeg::Subsamp::Sub2x2).unwrap();
+    //     turbojpeg::compress_image(&image, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
     // std::fs::write(
     //     std::env::temp_dir().join("c:/dst/KopijeSlika/test2.jpg"),
     //     &jpeg_data,
@@ -61,7 +67,7 @@ fn different_paths(src_dir: PathBuf, dst_dir: PathBuf, recursive: bool, resize: 
     // .unwrap();
 }
 
-fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: u8) {
+fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: i32) {
     let glob = get_glob();
     let mut lock = stdout().lock();
 }
@@ -71,7 +77,7 @@ pub fn process_images(
     dst_dir: PathBuf,
     recursive: bool,
     resize: bool,
-    quality: u8,
+    quality: i32,
 ) {
     println!("JPEG quality = {quality}\n");
     stdout().flush().expect("Failed to flush stdout.");
