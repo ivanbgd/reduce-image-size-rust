@@ -24,9 +24,9 @@ pub struct Args {
     #[arg(long)]
     pub resize: bool,
 
-    /// JPEG quality, on a scale from 0 (worst) to 95 (best);
+    /// JPEG quality, on a scale from 1 (worst) to 100 (best);
     /// ignored in case of PNGs
     #[arg(short, long, default_value_t = QUALITY,
-    value_parser = clap::value_parser!(u8).range(0..=95))]
+    value_parser = clap::value_parser!(u8).range(1..=100))]
     pub quality: u8,
 }

@@ -20,13 +20,6 @@ fn main() {
     let resize = args.resize;
     let quality = args.quality;
 
-    // /// REMOVE
-    println!(
-        "{}, {}, {recursive}, {resize}, {quality}\n",
-        src_dir.display(),
-        dst_dir.display()
-    );
-
     if Path::new(&dst_dir).is_file() {
         println!(
             "\"{}\" exists and is a file! Provide a proper target directory.",
