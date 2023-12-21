@@ -1,3 +1,4 @@
+use std::fs;
 use std::io::{stdout, Write};
 use std::path::PathBuf;
 
@@ -15,6 +16,8 @@ fn get_glob() -> GlobMatcher {
         .compile_matcher()
 }
 
+/// Returns an iterator over the list of files under the `src_dir`, recursively or not.
+/// Doesn't return subdirectories, but only files.
 fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = walkdir::DirEntry> {
     match recursive {
         true => WalkDir::new(src_dir).into_iter().filter_map(Result::ok),
@@ -42,6 +45,14 @@ fn different_paths(
             let dst_path = dst_dir.as_path().join(
                 diff_paths(src_path.path().to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
             );
+            fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+
+            let jpeg_data = fs::read(src_path.path()).unwrap();
+            let image: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
+            // let scaled = img.resize(400, 400, filter);
+            let jpeg_data =
+                turbojpeg::compress_image(&image, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+            fs::write(&dst_path, &jpeg_data).unwrap();
 
             writeln!(
                 lock,
@@ -52,19 +63,6 @@ fn different_paths(
             .expect("Failed to write to stdout.");
         }
     }
-
-    // let src_path = "c:/sl/Slike/Lj/IMG_20220620_174403.jpg";
-    // // let src_path = "c:/sl/Slike/pngs/pngwing.com.png";
-    //
-    // let jpeg_data = std::fs::read(src_path).unwrap();
-    // let image: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
-    // let jpeg_data =
-    //     turbojpeg::compress_image(&image, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-    // std::fs::write(
-    //     std::env::temp_dir().join("c:/dst/KopijeSlika/test2.jpg"),
-    //     &jpeg_data,
-    // )
-    // .unwrap();
 }
 
 fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: i32) {
