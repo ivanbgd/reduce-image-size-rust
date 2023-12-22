@@ -15,9 +15,10 @@ name = "reduce_image_size"
 path = "src/main.rs"
 
 [dependencies]
-clap = {version = "4.0", features = ["derive"]}
+clap = { version = "4.0", features = ["derive"] }
 globset = "0.4"
 image = "0.24.7"
-pathdiff = {version="0.2.1"}
-turbojpeg = {version = "0.5", features = ["image"]}
+oxipng = { version = "9.0" , default-features = false, features = ["parallel"] }
+pathdiff = { version="0.2.1"}
+turbojpeg = { version = "0.5", features = ["image"] }
 walkdir = "2"
