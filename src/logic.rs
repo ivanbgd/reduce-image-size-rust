@@ -51,12 +51,22 @@ fn different_paths(
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
+            let mut new_src_path = Path::new(src_path);
+
+            let dst_path = dst_dir
+                .as_path()
+                .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
+            fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
-                    let dst_path = dst_dir.as_path().join(
-                        diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
-                    );
-                    fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+                    if resize {
+                        let mut img = image::open(src_path).unwrap();
+                        let (w, h) = img.dimensions();
+                        img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
+                        img.save(&dst_path).unwrap();
+                        new_src_path = Path::new(&dst_path);
+                    }
 
                     //
                     // let img = image::open(src_path).unwrap();
@@ -76,7 +86,7 @@ fn different_paths(
                     // println!("{:?}", header);
                     // //
 
-                    let jpeg_data = fs::read(src_path).unwrap();
+                    let jpeg_data = fs::read(new_src_path).unwrap();
                     let img: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
                     let jpeg_data =
                         turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2)
@@ -93,11 +103,13 @@ fn different_paths(
                 }
 
                 "png" => {
-                    let mut new_src_path = Path::new(src_path);
-                    let dst_path = dst_dir.as_path().join(
-                        diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
-                    );
-                    fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+                    if resize {
+                        let mut img = image::open(src_path).unwrap();
+                        let (w, h) = img.dimensions();
+                        img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
+                        img.save(&dst_path).unwrap();
+                        new_src_path = Path::new(&dst_path);
+                    }
 
                     // let contents = fs::read(src_path).unwrap();
 
@@ -114,14 +126,6 @@ fn different_paths(
                     //     }
                     //     Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
                     // }
-
-                    if resize {
-                        let mut img = image::open(src_path).unwrap();
-                        let (w, h) = img.dimensions();
-                        img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
-                        img.save(&dst_path).unwrap();
-                        new_src_path = Path::new(&dst_path);
-                    }
 
                     match optimize(
                         &InFile::Path(new_src_path.to_path_buf()),
