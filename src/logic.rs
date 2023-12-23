@@ -134,8 +134,8 @@ fn different_paths(
                             .unwrap()
                             .resize(src.as_rgb(), dst.as_rgb_mut())
                             .unwrap(),
-                        ColorType::Indexed => unimplemented!(),
-                        ColorType::GrayscaleAlpha => unimplemented!(),
+                        ColorType::Indexed => (),
+                        ColorType::GrayscaleAlpha => (),
                         ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
                             .unwrap()
                             .resize(src.as_rgba(), dst.as_rgba_mut())
