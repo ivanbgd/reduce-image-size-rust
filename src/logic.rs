@@ -137,10 +137,18 @@ fn different_paths(
                                 .unwrap()
                                 .resize(src.as_rgb(), dst.as_rgb_mut())
                                 .unwrap(),
-                            ColorType::Indexed => println!("Can't resize an Indexed PNG."),
-                            ColorType::GrayscaleAlpha => {
-                                println!("Can't resize a GrayscaleAlpha PNG.")
-                            }
+                            ColorType::Indexed => writeln!(
+                                lock,
+                                "Can't resize an Indexed PNG: {}",
+                                dst_path.display()
+                            )
+                            .expect("Failed to write to stdout."),
+                            ColorType::GrayscaleAlpha => writeln!(
+                                lock,
+                                "Can't resize a GrayscaleAlpha PNG: {}",
+                                dst_path.display()
+                            )
+                            .expect("Failed to write to stdout."),
                             ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
                                 .unwrap()
                                 .resize(src.as_rgba(), dst.as_rgba_mut())
