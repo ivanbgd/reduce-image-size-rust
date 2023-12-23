@@ -1,14 +1,21 @@
 use std::fs;
 use std::fs::File;
+use std::io::BufWriter;
 use std::io::{stdout, Write};
+use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
+use fast_image_resize as fr;
 use globset::{GlobBuilder, GlobMatcher};
+use image::codecs::jpeg::JpegEncoder;
+use image::codecs::png::PngEncoder;
 use image::imageops::FilterType;
+use image::io::Reader as ImageReader;
+use image::{ColorType, ImageEncoder};
 use image::{DynamicImage, EncodableLayout, GenericImageView, ImageBuffer};
 use oxipng::{optimize, optimize_from_memory, InFile, Options, OutFile};
 use pathdiff::diff_paths;
-use png::{BitDepth, ColorType};
+// use png::{BitDepth, ColorType};
 use resize::Pixel;
 use resize::Type::Lanczos3;
 use rgb::FromSlice;
@@ -24,6 +31,9 @@ use crate::constants::PATTERNS;
 //         .compile_matcher()
 // }
 
+// TODO: Add proper error-handling!
+// TODO: Remove unused dependencies from this file and from Cargo.toml!
+
 /// Returns an iterator over the list of files under the `src_dir`, recursively or not.
 /// Doesn't return subdirectories, but only files.
 fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = walkdir::DirEntry> {
@@ -38,12 +48,66 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-fn resize_image(src_path: &Path, dst_path: &PathBuf) {
+// TODO: Make it generic over JPEG & PNG!
+fn resize_image(src_path: &Path) -> Vec<u8> {
+    let img = ImageReader::open(src_path).unwrap().decode().unwrap();
+    let width = img.width();
+    let height = img.height();
+    let color_type = img.color();
+    println!("{}, {}, {:?}", width, height, color_type); // todo remove
+
+    let mut src_image = fr::Image::from_vec_u8(
+        NonZeroU32::new(width).unwrap(),
+        NonZeroU32::new(height).unwrap(),
+        img.to_rgba8().into_raw(),
+        fr::PixelType::U8x4,
+    )
+    .unwrap();
+
+    let alpha_mul_div = fr::MulDiv::default();
+    alpha_mul_div
+        .multiply_alpha_inplace(&mut src_image.view_mut())
+        .unwrap();
+
+    let dst_width = NonZeroU32::new(width / 2).unwrap();
+    let dst_height = NonZeroU32::new(height / 2).unwrap();
+    let mut dst_image = fr::Image::new(dst_width, dst_height, src_image.pixel_type());
+
+    let mut dst_view = dst_image.view_mut();
+
+    let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
+    resizer.resize(&src_image.view(), &mut dst_view).unwrap();
+
+    alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap();
+
+    let mut result_buf = BufWriter::new(Vec::new());
+    JpegEncoder::new(&mut result_buf)
+        .write_image(
+            dst_image.buffer(),
+            dst_width.get(),
+            dst_height.get(),
+            ColorType::Rgba8,
+        )
+        .unwrap();
+
+    result_buf.into_inner().unwrap()
+}
+
+fn optimize_jpeg(jpeg_data: Vec<u8>, dst_path: &PathBuf, quality: i32) {
+    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
+    let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+    fs::write(&dst_path, &jpeg_data).unwrap();
+}
+
+// TODO: Remove!
+fn resize_png(src_path: &Path, dst_path: &PathBuf) {
     let mut img = image::open(src_path).unwrap();
     let (w, h) = img.dimensions();
     img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
     img.save(dst_path).unwrap();
 }
+
+fn optimize_png() {}
 
 fn different_paths(
     src_dir: PathBuf,
@@ -58,8 +122,6 @@ fn different_paths(
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
-            let mut new_src_path = Path::new(src_path);
-
             let dst_path = dst_dir
                 .as_path()
                 .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
@@ -67,17 +129,14 @@ fn different_paths(
 
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
+                    // TODO: Consider adding `process_jpeg()`.
                     if resize {
-                        resize_image(src_path, &dst_path);
-                        new_src_path = Path::new(&dst_path);
+                        let jpeg_data = resize_image(src_path);
+                        optimize_jpeg(jpeg_data, &dst_path, quality);
+                    } else {
+                        let jpeg_data = fs::read(src_path).unwrap();
+                        optimize_jpeg(jpeg_data, &dst_path, quality);
                     }
-
-                    let jpeg_data = fs::read(new_src_path).unwrap();
-                    let img: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
-                    let jpeg_data =
-                        turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2)
-                            .unwrap();
-                    fs::write(&dst_path, &jpeg_data).unwrap();
 
                     writeln!(
                         lock,
@@ -89,10 +148,15 @@ fn different_paths(
                 }
 
                 "png" => {
+                    // TODO: Consider adding `process_png()`.
+                    let mut new_src_path = Path::new(src_path);
+
                     if resize {
-                        resize_image(src_path, &dst_path);
+                        resize_png(src_path, &dst_path);
                         new_src_path = Path::new(&dst_path);
                     }
+
+                    // TODO: Try to read from memory instead of writing to and reading again from a file!
 
                     // let contents = fs::read(src_path).unwrap();
 
@@ -136,6 +200,7 @@ fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: i32) {
     let mut lock = stdout().lock();
 }
 
+// TODO: Consider removing `different_paths()` and `same_paths()`, and doing everything in `process_images()`.
 pub fn process_images(
     src_dir: PathBuf,
     dst_dir: PathBuf,
