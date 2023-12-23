@@ -1,5 +1,4 @@
 use std::fs;
-use std::fs::File;
 use std::io::BufWriter;
 use std::io::{stdout, Write};
 use std::num::NonZeroU32;
@@ -16,9 +15,6 @@ use image::{DynamicImage, EncodableLayout, GenericImageView, ImageBuffer};
 use oxipng::{optimize, optimize_from_memory, InFile, Options, OutFile};
 use pathdiff::diff_paths;
 // use png::{BitDepth, ColorType};
-use resize::Pixel;
-use resize::Type::Lanczos3;
-use rgb::FromSlice;
 use walkdir::WalkDir;
 
 use crate::constants::PATTERNS;
@@ -32,7 +28,9 @@ use crate::constants::PATTERNS;
 // }
 
 // TODO: Add proper error-handling!
+
 // TODO: Remove unused dependencies from this file and from Cargo.toml!
+// Do it first for image-processing libs, and for globbing at the VERY end.
 
 /// Returns an iterator over the list of files under the `src_dir`, recursively or not.
 /// Doesn't return subdirectories, but only files.
@@ -54,7 +52,8 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     let width = img.width();
     let height = img.height();
     let color_type = img.color();
-    println!("{}, {}, {:?}", width, height, color_type); // todo remove
+
+    // TODO: Consider checking (matching by) color type.
 
     let mut src_image = fr::Image::from_vec_u8(
         NonZeroU32::new(width).unwrap(),
@@ -64,6 +63,14 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     )
     .unwrap();
 
+    println!(
+        "{}, {}, {:?}, {:?}",
+        width,
+        height,
+        color_type,
+        src_image.pixel_type()
+    ); // todo remove
+
     let alpha_mul_div = fr::MulDiv::default();
     alpha_mul_div
         .multiply_alpha_inplace(&mut src_image.view_mut())
@@ -72,6 +79,13 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     let dst_width = NonZeroU32::new(width / 2).unwrap();
     let dst_height = NonZeroU32::new(height / 2).unwrap();
     let mut dst_image = fr::Image::new(dst_width, dst_height, src_image.pixel_type());
+
+    println!(
+        "{}, {}, {:?}",
+        dst_width,
+        dst_height,
+        dst_image.pixel_type()
+    ); // todo remove
 
     let mut dst_view = dst_image.view_mut();
 
@@ -86,6 +100,7 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
             dst_image.buffer(),
             dst_width.get(),
             dst_height.get(),
+            // color_type,
             ColorType::Rgba8,
         )
         .unwrap();
@@ -94,9 +109,10 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
 }
 
 fn optimize_jpeg(jpeg_data: Vec<u8>, dst_path: &PathBuf, quality: i32) {
-    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
+    // TODO: Consider checking (matching by) color type.
+    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap(); // image::RgbImage
     let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-    fs::write(&dst_path, &jpeg_data).unwrap();
+    fs::write(dst_path, &jpeg_data).unwrap();
 }
 
 // TODO: Remove!
@@ -195,10 +211,10 @@ fn different_paths(
     }
 }
 
-fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: i32) {
-    // let glob = get_glob();
-    let mut lock = stdout().lock();
-}
+// fn same_paths(src_dir: PathBuf, recursive: bool, resize: bool, quality: i32) {
+//     // let glob = get_glob();
+//     let mut lock = stdout().lock();
+// }
 
 // TODO: Consider removing `different_paths()` and `same_paths()`, and doing everything in `process_images()`.
 pub fn process_images(
@@ -214,6 +230,6 @@ pub fn process_images(
     if src_dir != dst_dir {
         different_paths(src_dir, dst_dir, recursive, resize, quality);
     } else {
-        same_paths(src_dir, recursive, resize, quality);
+        // same_paths(src_dir, recursive, resize, quality);
     }
 }
