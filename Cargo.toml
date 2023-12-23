@@ -16,9 +16,13 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
+fast_image_resize = "2.7.3"
 globset = "0.4"
 image = "0.24.7"
 oxipng = { version = "9.0" , default-features = false, features = ["parallel"] }
 pathdiff = { version="0.2.1"}
+resize = "0.8.3"
+rgb = "0.8.37"
 turbojpeg = { version = "0.5", features = ["image"] }
 walkdir = "2"
+png = "0.17.10"
