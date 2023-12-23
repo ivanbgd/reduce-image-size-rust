@@ -49,7 +49,7 @@ fn different_paths(
     let mut lock = stdout().lock();
 
     for src_path in get_file_list(&src_dir, recursive) {
-        let src_path = src_path.path();
+        let mut src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
@@ -113,43 +113,48 @@ fn different_paths(
                     // let a = ImageBuffer::from_raw(1, 1, contents).unwrap();
                     // let b = ImageBuffer::from_vec(1, 1, contents).unwrap();
 
-                    let decoder = png::Decoder::new(File::open(src_path).unwrap());
-                    let mut reader = decoder.read_info().unwrap();
-                    let info = reader.info();
-                    let color_type = info.color_type;
-                    let bit_depth = info.bit_depth;
-                    let (w1, h1) = (info.width as usize, info.height as usize);
-                    assert_eq!(BitDepth::Eight, bit_depth);
-                    // println!("{:?}", info);
-                    let mut src = vec![0; reader.output_buffer_size()];
-                    reader.next_frame(&mut src).unwrap();
-                    let (w2, h2) = (w1 / 2, h1 / 2);
-                    let mut dst = vec![0u8; w2 * h2 * color_type.samples()];
-                    match color_type {
-                        ColorType::Grayscale => resize::new(w1, h1, w2, h2, Pixel::Gray8, Lanczos3)
+                    if resize {
+                        let decoder = png::Decoder::new(File::open(src_path).unwrap());
+                        let mut reader = decoder.read_info().unwrap();
+                        let info = reader.info();
+                        let color_type = info.color_type;
+                        let bit_depth = info.bit_depth;
+                        let (w1, h1) = (info.width as usize, info.height as usize);
+                        assert_eq!(BitDepth::Eight, bit_depth);
+                        // println!("{:?}", info);
+                        let mut src = vec![0; reader.output_buffer_size()];
+                        reader.next_frame(&mut src).unwrap();
+                        let (w2, h2) = (w1 / 2, h1 / 2);
+                        let mut dst = vec![0u8; w2 * h2 * color_type.samples()];
+                        match color_type {
+                            ColorType::Grayscale => {
+                                resize::new(w1, h1, w2, h2, Pixel::Gray8, Lanczos3)
+                                    .unwrap()
+                                    .resize(src.as_gray(), dst.as_gray_mut())
+                                    .unwrap()
+                            }
+                            ColorType::Rgb => resize::new(w1, h1, w2, h2, Pixel::RGB8, Lanczos3)
+                                .unwrap()
+                                .resize(src.as_rgb(), dst.as_rgb_mut())
+                                .unwrap(),
+                            ColorType::Indexed => (),
+                            ColorType::GrayscaleAlpha => (),
+                            ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
+                                .unwrap()
+                                .resize(src.as_rgba(), dst.as_rgba_mut())
+                                .unwrap(),
+                        };
+                        let outfh = File::create(&dst_path).unwrap();
+                        let mut encoder = png::Encoder::new(outfh, w2 as u32, h2 as u32);
+                        encoder.set_color(color_type);
+                        encoder.set_depth(bit_depth);
+                        encoder
+                            .write_header()
                             .unwrap()
-                            .resize(src.as_gray(), dst.as_gray_mut())
-                            .unwrap(),
-                        ColorType::Rgb => resize::new(w1, h1, w2, h2, Pixel::RGB8, Lanczos3)
-                            .unwrap()
-                            .resize(src.as_rgb(), dst.as_rgb_mut())
-                            .unwrap(),
-                        ColorType::Indexed => (),
-                        ColorType::GrayscaleAlpha => (),
-                        ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
-                            .unwrap()
-                            .resize(src.as_rgba(), dst.as_rgba_mut())
-                            .unwrap(),
-                    };
-                    let outfh = File::create(&dst_path).unwrap();
-                    let mut encoder = png::Encoder::new(outfh, w2 as u32, h2 as u32);
-                    encoder.set_color(color_type);
-                    encoder.set_depth(bit_depth);
-                    encoder
-                        .write_header()
-                        .unwrap()
-                        .write_image_data(&dst)
-                        .unwrap();
+                            .write_image_data(&dst)
+                            .unwrap();
+                        src_path = &*dst_path;
+                    }
 
                     // match optimize_from_memory(&i, &Options::default()) {
                     // match optimize_from_memory(&contents, &Options::default()) {
@@ -167,8 +172,7 @@ fn different_paths(
                     // }
 
                     match optimize(
-                        &InFile::Path(dst_path.to_path_buf()),
-                        // &InFile::Path(src_path.to_path_buf()),
+                        &InFile::Path(src_path.to_path_buf()),
                         &OutFile::from_path(dst_path.clone()),
                         &Options::default(),
                     ) {
