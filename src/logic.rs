@@ -38,6 +38,13 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
+fn resize_image(src_path: &Path, dst_path: &PathBuf) {
+    let mut img = image::open(src_path).unwrap();
+    let (w, h) = img.dimensions();
+    img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
+    img.save(dst_path).unwrap();
+}
+
 fn different_paths(
     src_dir: PathBuf,
     dst_dir: PathBuf,
@@ -61,30 +68,9 @@ fn different_paths(
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
                     if resize {
-                        let mut img = image::open(src_path).unwrap();
-                        let (w, h) = img.dimensions();
-                        img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
-                        img.save(&dst_path).unwrap();
+                        resize_image(src_path, &dst_path);
                         new_src_path = Path::new(&dst_path);
                     }
-
-                    //
-                    // let img = image::open(src_path).unwrap();
-                    // let (w, h) = img.dimensions();
-                    // let scaled = img.resize(w / 2, h / 2, FilterType::Lanczos3);
-                    // println!(
-                    //     "{}, {}; {}, {}; {}, {}",
-                    //     w,
-                    //     h,
-                    //     w / 2,
-                    //     h / 2,
-                    //     scaled.dimensions().0,
-                    //     scaled.dimensions().1
-                    // );
-                    // let jpeg_data = scaled.into_rgb8();
-                    // let header = turbojpeg::read_header(jpeg_data.as_bytes()).unwrap();
-                    // println!("{:?}", header);
-                    // //
 
                     let jpeg_data = fs::read(new_src_path).unwrap();
                     let img: image::RgbImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
@@ -104,10 +90,7 @@ fn different_paths(
 
                 "png" => {
                     if resize {
-                        let mut img = image::open(src_path).unwrap();
-                        let (w, h) = img.dimensions();
-                        img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
-                        img.save(&dst_path).unwrap();
+                        resize_image(src_path, &dst_path);
                         new_src_path = Path::new(&dst_path);
                     }
 
@@ -142,7 +125,6 @@ fn different_paths(
                         Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
                     };
                 }
-
                 _ => (),
             }
         }
