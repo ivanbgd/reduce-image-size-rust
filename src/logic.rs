@@ -81,7 +81,7 @@ fn different_paths(
                     let jpeg_data =
                         turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2)
                             .unwrap();
-                    fs::write(&dst_path, &jpeg_data).unwrap();
+                    // fs::write(&dst_path, &jpeg_data).unwrap();
 
                     writeln!(
                         lock,
@@ -98,76 +98,92 @@ fn different_paths(
                     );
                     fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
 
-                    // let contents = fs::read(src_path).unwrap();
-                    // let img = image::open(src_path).unwrap(); // ///
+                    // // let contents = fs::read(src_path).unwrap();
+                    // let mut img = image::open(src_path).unwrap(); // ///
                     // let (w, h) = img.dimensions();
-                    // let i = img.into_bytes(); // ///
-                    // let contents = match resize {
-                    //     true => {
-                    //         let img2 = img.resize(400, 400, FilterType::Lanczos3);
-                    //         img2.as_bytes()
-                    //     },
-                    //     false => img.as_bytes(),
-                    // };
+                    // // let i = img.into_bytes(); // ///
+                    // // let contents = match resize {
+                    // //     true => {
+                    // //         let img2 = img.resize(w / 2, h / 2, FilterType::Lanczos3);
+                    // //         img2.as_bytes()
+                    // //     }
+                    // //     false => img.as_bytes(),
+                    // // };
+                    // if resize {
+                    //     img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
+                    // }
+                    // let contents = img.as_bytes();
 
                     // let a = ImageBuffer::from_raw(1, 1, contents).unwrap();
                     // let b = ImageBuffer::from_vec(1, 1, contents).unwrap();
 
-                    if resize {
-                        let decoder = png::Decoder::new(File::open(src_path).unwrap());
-                        let mut reader = decoder.read_info().unwrap();
-                        let info = reader.info();
-                        let color_type = info.color_type;
-                        let bit_depth = info.bit_depth;
-                        let (w1, h1) = (info.width as usize, info.height as usize);
-                        assert_eq!(BitDepth::Eight, bit_depth);
-                        // println!("{:?}", info);
-                        let mut src = vec![0; reader.output_buffer_size()];
-                        reader.next_frame(&mut src).unwrap();
-                        let (w2, h2) = (w1 / 2, h1 / 2);
-                        let mut dst = vec![0u8; w2 * h2 * color_type.samples()];
-                        match color_type {
-                            ColorType::Grayscale => {
-                                resize::new(w1, h1, w2, h2, Pixel::Gray8, Lanczos3)
-                                    .unwrap()
-                                    .resize(src.as_gray(), dst.as_gray_mut())
-                                    .unwrap()
-                            }
-                            ColorType::Rgb => resize::new(w1, h1, w2, h2, Pixel::RGB8, Lanczos3)
-                                .unwrap()
-                                .resize(src.as_rgb(), dst.as_rgb_mut())
-                                .unwrap(),
-                            ColorType::Indexed => writeln!(
-                                lock,
-                                "Can't resize an Indexed PNG: {}",
-                                dst_path.display()
-                            )
-                            .expect("Failed to write to stdout."),
-                            ColorType::GrayscaleAlpha => writeln!(
-                                lock,
-                                "Can't resize a GrayscaleAlpha PNG: {}",
-                                dst_path.display()
-                            )
-                            .expect("Failed to write to stdout."),
-                            ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
-                                .unwrap()
-                                .resize(src.as_rgba(), dst.as_rgba_mut())
-                                .unwrap(),
-                        };
-                        let outfh = File::create(&dst_path).unwrap();
-                        let mut encoder = png::Encoder::new(outfh, w2 as u32, h2 as u32);
-                        encoder.set_color(color_type);
-                        encoder.set_depth(bit_depth);
-                        encoder
-                            .write_header()
-                            .unwrap()
-                            .write_image_data(&dst)
-                            .unwrap();
-                        src_path = &*dst_path;
-                    }
+                    // if resize {
+                    //     let decoder = png::Decoder::new(File::open(src_path).unwrap());
+                    //     let mut reader = decoder.read_info().unwrap();
+                    //     let info = reader.info();
+                    //     let color_type = info.color_type;
+                    //     let bit_depth = info.bit_depth;
+                    //     let (w1, h1) = (info.width as usize, info.height as usize);
+                    //     assert_eq!(BitDepth::Eight, bit_depth);
+                    //     // println!("{:?}", info);
+                    //     let mut src = vec![0; reader.output_buffer_size()];
+                    //     reader.next_frame(&mut src).unwrap();
+                    //     let (w2, h2) = (w1 / 2, h1 / 2);
+                    //     let mut dst = vec![0u8; w2 * h2 * color_type.samples()];
+                    //     match color_type {
+                    //         ColorType::Grayscale => {
+                    //             resize::new(w1, h1, w2, h2, Pixel::Gray8, Lanczos3)
+                    //                 .unwrap()
+                    //                 .resize(src.as_gray(), dst.as_gray_mut())
+                    //                 .unwrap()
+                    //         }
+                    //         ColorType::Rgb => resize::new(w1, h1, w2, h2, Pixel::RGB8, Lanczos3)
+                    //             .unwrap()
+                    //             .resize(src.as_rgb(), dst.as_rgb_mut())
+                    //             .unwrap(),
+                    //         ColorType::Indexed => writeln!(
+                    //             lock,
+                    //             "Can't resize an Indexed PNG: {}",
+                    //             dst_path.display()
+                    //         )
+                    //         .expect("Failed to write to stdout."),
+                    //         ColorType::GrayscaleAlpha => writeln!(
+                    //             lock,
+                    //             "Can't resize a GrayscaleAlpha PNG: {}",
+                    //             dst_path.display()
+                    //         )
+                    //         .expect("Failed to write to stdout."),
+                    //         ColorType::Rgba => resize::new(w1, h1, w2, h2, Pixel::RGBA8, Lanczos3)
+                    //             .unwrap()
+                    //             .resize(src.as_rgba(), dst.as_rgba_mut())
+                    //             .unwrap(),
+                    //     };
+                    //     let outfh = File::create(&dst_path).unwrap();
+                    //     let mut encoder = png::Encoder::new(outfh, w2 as u32, h2 as u32);
+                    //     encoder.set_color(color_type);
+                    //     encoder.set_depth(bit_depth);
+                    //     encoder
+                    //         .write_header()
+                    //         .unwrap()
+                    //         .write_image_data(&dst)
+                    //         .unwrap();
+                    //     src_path = &*dst_path;
+                    // }
 
-                    // match optimize_from_memory(&i, &Options::default()) {
-                    // match optimize_from_memory(&contents, &Options::default()) {
+                    let contents = fs::read(src_path).unwrap();
+                    println!("{:?}, {}", &contents[..8], contents.len());
+
+                    let img = image::open(src_path).unwrap();
+                    let (w, h) = img.dimensions();
+                    let color_type = img.color(); // We can match by color_type.
+                    println!("{}, {}, {:?}", w, h, color_type);
+                    let img = image::RgbaImage::new(w, h);
+                    println!("{}", img.len());
+                    let samples = img.into_flat_samples();
+                    // println!("{:?}", samples);
+
+                    // // match optimize_from_memory(&i, &Options::default()) {
+                    // match optimize_from_memory(contents, &Options::default()) {
                     //     Ok(optimized) => {
                     //         fs::write(&dst_path, optimized).unwrap();
                     //         writeln!(
