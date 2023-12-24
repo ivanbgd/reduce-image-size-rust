@@ -1,6 +1,6 @@
+use std::error::Error;
 use std::fs;
-use std::io::{stdout, Write};
-use std::io::{BufWriter, StdoutLock};
+use std::io::{stdout, BufWriter, StdoutLock, Write};
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
@@ -28,26 +28,22 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-fn resize_image(src_path: &Path) -> Vec<u8> {
-    let img = ImageReader::open(src_path).unwrap().decode().unwrap();
+fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
+    let img = ImageReader::open(src_path)?
+        .with_guessed_format()?
+        .decode()?;
     let width = img.width();
     let height = img.height();
-
-    // TODO: Consider checking (matching by) `color_type`.
-    // let color_type = img.color();
 
     let mut src_image = fr::Image::from_vec_u8(
         NonZeroU32::new(width).unwrap(),
         NonZeroU32::new(height).unwrap(),
-        img.to_rgba8().into_raw(), // color type
-        fr::PixelType::U8x4,       // color/pixel type
-    )
-    .unwrap();
+        img.to_rgba8().into_raw(),
+        fr::PixelType::U8x4,
+    )?;
 
-    let alpha_mul_div = fr::MulDiv::default(); // Supported only by certain color types.
-    alpha_mul_div
-        .multiply_alpha_inplace(&mut src_image.view_mut())
-        .unwrap();
+    let alpha_mul_div = fr::MulDiv::default();
+    alpha_mul_div.multiply_alpha_inplace(&mut src_image.view_mut())?;
 
     let dst_width = NonZeroU32::new(width / 2).unwrap();
     let dst_height = NonZeroU32::new(height / 2).unwrap();
@@ -56,9 +52,9 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     let mut dst_view = dst_image.view_mut();
 
     let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
-    resizer.resize(&src_image.view(), &mut dst_view).unwrap();
+    resizer.resize(&src_image.view(), &mut dst_view)?;
 
-    alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap(); // Supported only by certain color types.
+    alpha_mul_div.divide_alpha_inplace(&mut dst_view)?;
 
     let mut result_buf = BufWriter::new(Vec::new());
 
@@ -66,30 +62,24 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
         .extension()
         .expect("Expected the file to have an extension at this point!");
     match extension.to_string_lossy().to_lowercase().as_str() {
-        "jpg" | "jpeg" => {
-            JpegEncoder::new(&mut result_buf)
-                .write_image(
-                    dst_image.buffer(),
-                    dst_width.get(),
-                    dst_height.get(),
-                    ColorType::Rgba8, // color_type,
-                )
-                .unwrap()
-        }
-        "png" => {
-            PngEncoder::new(&mut result_buf)
-                .write_image(
-                    dst_image.buffer(),
-                    dst_width.get(),
-                    dst_height.get(),
-                    ColorType::Rgba8, // color_type,
-                )
-                .unwrap()
-        }
+        "jpg" | "jpeg" => JpegEncoder::new(&mut result_buf).write_image(
+            dst_image.buffer(),
+            dst_width.get(),
+            dst_height.get(),
+            ColorType::Rgba8, // color_type,
+        )?,
+        "png" => PngEncoder::new(&mut result_buf).write_image(
+            dst_image.buffer(),
+            dst_width.get(),
+            dst_height.get(),
+            ColorType::Rgba8,
+        )?,
         _ => panic!("Unsupported image format (file extension): {:?}", extension),
     }
 
-    result_buf.into_inner().unwrap()
+    let result = result_buf.into_inner()?;
+
+    Ok(result)
 }
 
 // TODO: Add error-handling.
@@ -100,21 +90,57 @@ fn process_jpeg(
     quality: i32,
     lock: &mut StdoutLock,
 ) {
-    let jpeg_data = match resize {
-        true => resize_image(src_path),
-        false => fs::read(src_path).unwrap(),
+    let image_data = match resize {
+        true => match resize_image(src_path) {
+            Ok(data) => data,
+            Err(err) => {
+                writeln!(
+                    lock,
+                    "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
+                     \tWill attempt to optimize the image without resizing it.",
+                    src_path.display(),
+                    err
+                )
+                .expect("Failed to write to stdout.");
+                match fs::read(src_path) {
+                    Ok(data) => data,
+                    Err(err) => {
+                        writeln!(
+                            lock,
+                            "\t[ERROR] Trying to read \"{}\" failed with the following error: {}.",
+                            src_path.display(),
+                            err
+                        )
+                        .expect("Failed to write to stdout.");
+                        return;
+                    }
+                }
+            }
+        },
+        false => match fs::read(src_path) {
+            Ok(data) => data,
+            Err(err) => {
+                writeln!(
+                    lock,
+                    "\t[ERROR] Trying to read \"{}\" failed with the following error: {}.",
+                    src_path.display(),
+                    err
+                )
+                .expect("Failed to write to stdout.");
+                return;
+            }
+        },
     };
 
-    // TODO: Consider checking (matching by) color type.
-    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
-
+    let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
     let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+
     fs::write(&dst_path, &optimized).unwrap();
 
     // TODO: See if you can extract this writeln.
     writeln!(
         lock,
-        "Resized \"{}\" to \"{}\".",
+        "Reduced \"{}\" to \"{}\".",
         src_path.display(),
         dst_path.display()
     )
@@ -123,17 +149,17 @@ fn process_jpeg(
 
 // TODO: Add error-handling.
 fn process_png(src_path: &Path, dst_path: PathBuf, resize: bool, lock: &mut StdoutLock) {
-    let png_data = match resize {
-        true => resize_image(src_path),
-        false => fs::read(src_path).unwrap(),
+    let image_data = match resize {
+        true => resize_image(src_path).unwrap(),
+        false => vec![], //fs::read(src_path).unwrap(),
     };
 
-    match optimize_from_memory(&png_data, &Options::default()) {
+    match optimize_from_memory(&image_data, &Options::default()) {
         Ok(optimized) => {
             fs::write(&dst_path, optimized).unwrap();
             writeln!(
                 lock,
-                "Resized \"{}\" to \"{}\".",
+                "Reduced \"{}\" to \"{}\".",
                 src_path.display(),
                 dst_path.display()
             )

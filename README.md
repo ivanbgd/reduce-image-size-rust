@@ -20,8 +20,8 @@ Options:
 - Reduce both image dimensions by half: `--resize`
 - JPEG quality, on a scale from 1 (worst) to 100 (best); the default is 75; ignored in case of PNGs: `--quality <QUALITY>`
 
-Written in Rust 1.74.1.  
-Tested on Windows 11 with JPEGs and PNGs.  
+Developed in Rust 1.74.1.  
+Tested on an x86-64 CPU with Windows 11 with JPEGs and PNGs.  
 Other OSes haven't been tested, but should work.
 
 ## Running the Application
