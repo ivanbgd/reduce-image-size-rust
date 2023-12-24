@@ -46,14 +46,17 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
+enum Encoder<W: Write> {
+    Encoder(JpegEncoder<W>, PngEncoder<W>),
+}
+
 // TODO: Make it generic over JPEG & PNG!
-fn resize_image(src_path: &Path) -> Vec<u8> {
+// fn resize_image<W: Write>(src_path: &Path, enc: Encoder::<W>) -> Vec<u8> {
+fn resize_image<T>(src_path: &Path) -> Vec<u8> {
     let img = ImageReader::open(src_path).unwrap().decode().unwrap();
     let width = img.width();
     let height = img.height();
-    let color_type = img.color();
-
-    // TODO: Consider checking (matching by) color type.
+    let color_type = img.color(); // TODO: Consider checking (matching by) `color_type`.
 
     let mut src_image = fr::Image::from_vec_u8(
         NonZeroU32::new(width).unwrap(),
@@ -70,6 +73,15 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
         color_type,
         src_image.pixel_type()
     ); // todo remove
+    println!(
+        "{:?}, {}, {}, {}, {}, {}",
+        color_type,
+        color_type.bytes_per_pixel(),
+        color_type.bits_per_pixel(),
+        color_type.has_alpha(),
+        color_type.has_color(),
+        color_type.channel_count()
+    ); // todo comment-out
 
     let alpha_mul_div = fr::MulDiv::default();
     alpha_mul_div
@@ -95,13 +107,13 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap();
 
     let mut result_buf = BufWriter::new(Vec::new());
-    JpegEncoder::new(&mut result_buf)
+    // JpegEncoder::new(&mut result_buf)
+    T::new(&mut result_buf)
         .write_image(
             dst_image.buffer(),
             dst_width.get(),
             dst_height.get(),
-            // color_type,
-            ColorType::Rgba8,
+            ColorType::Rgba8, // color_type,
         )
         .unwrap();
 
@@ -110,7 +122,7 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
 
 fn optimize_jpeg(jpeg_data: Vec<u8>, dst_path: &PathBuf, quality: i32) {
     // TODO: Consider checking (matching by) color type.
-    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap(); // image::RgbImage
+    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
     let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
     fs::write(dst_path, &jpeg_data).unwrap();
 }
@@ -147,7 +159,7 @@ fn different_paths(
                 "jpg" | "jpeg" => {
                     // TODO: Consider adding `process_jpeg()`.
                     if resize {
-                        let jpeg_data = resize_image(src_path);
+                        let jpeg_data = resize_image::<JpegEncoder<dyn Write>>(src_path);
                         optimize_jpeg(jpeg_data, &dst_path, quality);
                     } else {
                         let jpeg_data = fs::read(src_path).unwrap();
