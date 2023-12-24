@@ -201,7 +201,8 @@ fn different_paths(
             //     .unwrap();
 
             // TODO: Perhaps add a very simple `process_single_image()` - a thin wrapper/logic.
-            // TODO: Or, consider checking for dst == src, but through a flag that's set only once.
+            // TODO: Alternatively, consider checking for dst == src, but through a flag that's set only once.
+            // TODO: A CPU's Branch Predictor should be better than calling a function in each iteration.
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
                     process_jpeg(src_path, dst_path, resize, quality, &mut lock).unwrap()
