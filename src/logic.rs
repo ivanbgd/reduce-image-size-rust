@@ -55,8 +55,6 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
 
     let mut dst_view = dst_image.view_mut();
 
-    // TODO: Consider changing to an adaptive resize algorithm.
-    // Lanczos3 gives the best image quality of all filters, but also the largest file size.
     let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
     resizer.resize(&src_image.view(), &mut dst_view).unwrap();
 
@@ -110,8 +108,8 @@ fn process_jpeg(
     // TODO: Consider checking (matching by) color type.
     let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
 
-    let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-    fs::write(&dst_path, &jpeg_data).unwrap();
+    let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+    fs::write(&dst_path, &optimized).unwrap();
 
     // TODO: See if you can extract this writeln.
     writeln!(
@@ -152,7 +150,6 @@ fn different_paths(
     resize: bool,
     quality: i32,
 ) {
-    // let glob = get_glob();
     let mut lock = stdout().lock();
 
     for src_path in get_file_list(&src_dir, recursive) {
