@@ -46,7 +46,6 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-// TODO: Make it generic over JPEG & PNG!
 fn resize_image(src_path: &Path) -> Vec<u8> {
     let img = ImageReader::open(src_path).unwrap().decode().unwrap();
     let width = img.width();
@@ -58,12 +57,12 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
     let mut src_image = fr::Image::from_vec_u8(
         NonZeroU32::new(width).unwrap(),
         NonZeroU32::new(height).unwrap(),
-        img.to_rgba8().into_raw(),
-        fr::PixelType::U8x4,
+        img.to_rgba8().into_raw(), // color type
+        fr::PixelType::U8x4,       // color/pixel type
     )
     .unwrap();
 
-    let alpha_mul_div = fr::MulDiv::default();
+    let alpha_mul_div = fr::MulDiv::default(); // Supported only by certain color types.
     alpha_mul_div
         .multiply_alpha_inplace(&mut src_image.view_mut())
         .unwrap();
@@ -74,31 +73,46 @@ fn resize_image(src_path: &Path) -> Vec<u8> {
 
     let mut dst_view = dst_image.view_mut();
 
+    // TODO: Consider changing to an adaptive resize algorithm.
+    // Lanczos3 gives the best image quality of all filters, but also the largest file size.
     let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
     resizer.resize(&src_image.view(), &mut dst_view).unwrap();
 
-    alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap();
+    alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap(); // Supported only by certain color types.
 
     let mut result_buf = BufWriter::new(Vec::new());
-    JpegEncoder::new(&mut result_buf)
-        .write_image(
-            dst_image.buffer(),
-            dst_width.get(),
-            dst_height.get(),
-            ColorType::Rgba8, // color_type,
-        )
-        .unwrap();
+
+    let extension = src_path
+        .extension()
+        .expect("Expected the file to have an extension at this point!");
+    match extension.to_string_lossy().to_lowercase().as_str() {
+        "jpg" | "jpeg" => {
+            JpegEncoder::new(&mut result_buf)
+                .write_image(
+                    dst_image.buffer(),
+                    dst_width.get(),
+                    dst_height.get(),
+                    ColorType::Rgba8, // color_type,
+                )
+                .unwrap()
+        }
+        "png" => {
+            PngEncoder::new(&mut result_buf)
+                .write_image(
+                    dst_image.buffer(),
+                    dst_width.get(),
+                    dst_height.get(),
+                    ColorType::Rgba8, // color_type,
+                )
+                .unwrap()
+        }
+        _ => panic!("Unsupported image format (file extension): {:?}", extension),
+    }
 
     result_buf.into_inner().unwrap()
 }
 
-fn optimize_jpeg(jpeg_data: Vec<u8>, dst_path: &PathBuf, quality: i32) {
-    // TODO: Consider checking (matching by) color type.
-    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
-    let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-    fs::write(dst_path, &jpeg_data).unwrap();
-}
-
+// TODO: Add error-handling.
 fn process_jpeg(
     src_path: &Path,
     dst_path: PathBuf,
@@ -110,7 +124,12 @@ fn process_jpeg(
         true => resize_image(src_path),
         false => fs::read(src_path).unwrap(),
     };
-    optimize_jpeg(jpeg_data, &dst_path, quality);
+
+    // TODO: Consider checking (matching by) color type.
+    let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
+
+    let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+    fs::write(&dst_path, &jpeg_data).unwrap();
 
     // TODO: See if you can extract this writeln.
     writeln!(
@@ -122,15 +141,27 @@ fn process_jpeg(
     .expect("Failed to write to stdout.");
 }
 
-// TODO: Remove!
-fn resize_png(src_path: &Path, dst_path: &PathBuf) {
-    let mut img = image::open(src_path).unwrap();
-    let (w, h) = img.dimensions();
-    img = img.resize(w / 2, h / 2, FilterType::Lanczos3);
-    img.save(dst_path).unwrap();
-}
+// TODO: Add error-handling.
+fn process_png(src_path: &Path, dst_path: PathBuf, resize: bool, lock: &mut StdoutLock) {
+    let png_data = match resize {
+        true => resize_image(src_path),
+        false => fs::read(src_path).unwrap(),
+    };
 
-fn optimize_png() {}
+    match optimize_from_memory(&png_data, &Options::default()) {
+        Ok(optimized) => {
+            fs::write(&dst_path, optimized).unwrap();
+            writeln!(
+                lock,
+                "Resized \"{}\" to \"{}\".",
+                src_path.display(),
+                dst_path.display()
+            )
+            .expect("Failed to write to stdout.")
+        }
+        Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
+    }
+}
 
 fn different_paths(
     src_dir: PathBuf,
@@ -150,51 +181,10 @@ fn different_paths(
                 .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
             fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
 
+            // TODO: Consider adding `process_image()`.
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => process_jpeg(src_path, dst_path, resize, quality, &mut lock),
-
-                "png" => {
-                    // TODO: Consider adding `process_png()`.
-                    let mut new_src_path = Path::new(src_path);
-
-                    if resize {
-                        resize_png(src_path, &dst_path);
-                        new_src_path = Path::new(&dst_path);
-                    }
-
-                    // TODO: Try to read from memory instead of writing to and reading again from a file!
-
-                    // let contents = fs::read(src_path).unwrap();
-
-                    // match optimize_from_memory(&contents, &Options::default()) {
-                    //     Ok(optimized) => {
-                    //         fs::write(&dst_path, optimized).unwrap();
-                    //         writeln!(
-                    //             lock,
-                    //             "Resized \"{}\" to \"{}\".",
-                    //             src_path.display(),
-                    //             dst_path.display()
-                    //         )
-                    //         .expect("Failed to write to stdout.")
-                    //     }
-                    //     Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
-                    // }
-
-                    match optimize(
-                        &InFile::Path(new_src_path.to_path_buf()),
-                        &OutFile::from_path(dst_path.clone()),
-                        &Options::default(),
-                    ) {
-                        Ok(_) => writeln!(
-                            lock,
-                            "Resized \"{}\" to \"{}\".",
-                            src_path.display(),
-                            dst_path.display()
-                        )
-                        .expect("Failed to write to stdout."),
-                        Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
-                    };
-                }
+                "png" => process_png(src_path, dst_path, resize, &mut lock),
                 _ => (),
             }
         }
