@@ -5,32 +5,14 @@ use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
 use fast_image_resize as fr;
-use globset::{GlobBuilder, GlobMatcher};
-use image::codecs::jpeg::JpegEncoder;
-use image::codecs::png::PngEncoder;
-use image::imageops::FilterType;
+use image::codecs::{jpeg::JpegEncoder, png::PngEncoder};
 use image::io::Reader as ImageReader;
 use image::{ColorType, ImageEncoder};
-use image::{DynamicImage, EncodableLayout, GenericImageView, ImageBuffer};
-use oxipng::{optimize, optimize_from_memory, InFile, Options, OutFile};
+use oxipng::{optimize_from_memory, Options};
 use pathdiff::diff_paths;
-// use png::{BitDepth, ColorType};
 use walkdir::WalkDir;
 
-use crate::constants::PATTERNS;
-
-// fn get_glob() -> GlobMatcher {
-//     GlobBuilder::new(PATTERNS)
-//         .case_insensitive(true)
-//         .build()
-//         .unwrap()
-//         .compile_matcher()
-// }
-
 // TODO: Add proper error-handling!
-
-// TODO: Remove unused dependencies from this file and from Cargo.toml!
-// Do it first for image-processing libs, and for globbing at the VERY end.
 
 /// Returns an iterator over the list of files under the `src_dir`, recursively or not.
 /// Doesn't return subdirectories, but only files.
