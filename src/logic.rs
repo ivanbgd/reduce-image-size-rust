@@ -80,6 +80,10 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     Ok(result)
 }
 
+// TODO: Consider splitting into resize & optimize (jpg/png)! Done.
+// TODO: Resize outside of "process_*", in a caller - it's a common op for all image types!
+// TODO: Rename "process_*" to "optimize_*". Or, remove them completely.
+
 // TODO: Add error-handling.
 fn process_jpeg(
     src_path: &Path,
@@ -156,9 +160,11 @@ fn process_png(
     // };
 
     // TODO: See if you can extract this writeln. I should extract it to the caller, because it should vary.
-    // TODO: Try to bubble-up result. Perhaps better not.
+    // TODO: Try to bubble-up result.
     // TODO: Alternatively, pass the flag for dst == src here, in this function, and for JPEG, too.
     // TODO: We have different output messages depending on the flag.
+    // TODO: Be mindful of the SRP!
+    // TODO: It's probably better to write to stdout in the caller than here.
     optimize_from_memory(&image_data, &Options::default())?;
 
     // ///
@@ -181,6 +187,7 @@ fn process_png(
 }
 
 // TODO: Add error-handling.
+// TODO: Perhaps this should be `process_images()`.
 fn different_paths(
     src_dir: PathBuf,
     dst_dir: PathBuf,
@@ -193,12 +200,30 @@ fn different_paths(
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
+            // TODO: Consider:
+            let image_data = match resize {
+                true => resize_image(src_path).unwrap_or_else(|err| {
+                    writeln!(
+                        lock,
+                        "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
+                         \tWill attempt to optimize the image without resizing it.",
+                        src_path.display(),
+                        err
+                    )
+                    .expect("Failed to write to stdout.");
+                    fs::read(src_path).unwrap()
+                }),
+                false => fs::read(src_path).unwrap(),
+            };
+            // TODO: Pass image_data to jpg/png optimization functions. Perhaps we don't even need them anymore. Inline optimization stuff here, in the below match.
+
             // TODO: Consider checking the flag for dst == src.
             let dst_path = dst_dir
                 .as_path()
                 .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
             fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
 
+            // TODO: Remove.
             // let extension = extension.to_string_lossy().to_lowercase();
             // let extension = extension.as_str();
             // process_single_image(src_path, dst_path, resize, quality, extension, &mut lock)
@@ -207,6 +232,7 @@ fn different_paths(
             // TODO: Perhaps add a very simple `process_single_image()` - a thin wrapper/logic.
             // TODO: Alternatively, consider checking for dst == src, but through a flag that's set only once.
             // TODO: A CPU's Branch Predictor should be better than calling a function in each iteration.
+            // TODO: Consider checking the flag for dst == src for different output, if you bubble-up result here.
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
                     process_jpeg(src_path, dst_path, resize, quality, &mut lock).unwrap()
