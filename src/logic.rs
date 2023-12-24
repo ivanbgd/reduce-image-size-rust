@@ -156,13 +156,16 @@ fn process_png(
     // };
 
     // TODO: See if you can extract this writeln. I should extract it to the caller, because it should vary.
-    // TODO: Try to bubble-up result.
+    // TODO: Try to bubble-up result. Perhaps better not.
+    // TODO: Alternatively, pass the flag for dst == src here, in this function, and for JPEG, too.
+    // TODO: We have different output messages depending on the flag.
     optimize_from_memory(&image_data, &Options::default())?;
 
     // ///
     match optimize_from_memory(&image_data, &Options::default()) {
         Ok(optimized) => {
             fs::write(&dst_path, optimized).unwrap();
+            // TODO: Consider checking the flag for dst == src.
             writeln!(
                 lock,
                 "Reduced \"{}\" to \"{}\".",
@@ -190,6 +193,7 @@ fn different_paths(
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
+            // TODO: Consider checking the flag for dst == src.
             let dst_path = dst_dir
                 .as_path()
                 .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
