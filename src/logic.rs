@@ -1,6 +1,6 @@
 use std::fs;
-use std::io::BufWriter;
 use std::io::{stdout, Write};
+use std::io::{BufWriter, StdoutLock};
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
@@ -46,17 +46,14 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-enum Encoder<W: Write> {
-    Encoder(JpegEncoder<W>, PngEncoder<W>),
-}
-
 // TODO: Make it generic over JPEG & PNG!
-// fn resize_image<W: Write>(src_path: &Path, enc: Encoder::<W>) -> Vec<u8> {
-fn resize_image<T>(src_path: &Path) -> Vec<u8> {
+fn resize_image(src_path: &Path) -> Vec<u8> {
     let img = ImageReader::open(src_path).unwrap().decode().unwrap();
     let width = img.width();
     let height = img.height();
-    let color_type = img.color(); // TODO: Consider checking (matching by) `color_type`.
+
+    // TODO: Consider checking (matching by) `color_type`.
+    // let color_type = img.color();
 
     let mut src_image = fr::Image::from_vec_u8(
         NonZeroU32::new(width).unwrap(),
@@ -65,23 +62,6 @@ fn resize_image<T>(src_path: &Path) -> Vec<u8> {
         fr::PixelType::U8x4,
     )
     .unwrap();
-
-    println!(
-        "{}, {}, {:?}, {:?}",
-        width,
-        height,
-        color_type,
-        src_image.pixel_type()
-    ); // todo remove
-    println!(
-        "{:?}, {}, {}, {}, {}, {}",
-        color_type,
-        color_type.bytes_per_pixel(),
-        color_type.bits_per_pixel(),
-        color_type.has_alpha(),
-        color_type.has_color(),
-        color_type.channel_count()
-    ); // todo comment-out
 
     let alpha_mul_div = fr::MulDiv::default();
     alpha_mul_div
@@ -92,13 +72,6 @@ fn resize_image<T>(src_path: &Path) -> Vec<u8> {
     let dst_height = NonZeroU32::new(height / 2).unwrap();
     let mut dst_image = fr::Image::new(dst_width, dst_height, src_image.pixel_type());
 
-    println!(
-        "{}, {}, {:?}",
-        dst_width,
-        dst_height,
-        dst_image.pixel_type()
-    ); // todo remove
-
     let mut dst_view = dst_image.view_mut();
 
     let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
@@ -107,8 +80,7 @@ fn resize_image<T>(src_path: &Path) -> Vec<u8> {
     alpha_mul_div.divide_alpha_inplace(&mut dst_view).unwrap();
 
     let mut result_buf = BufWriter::new(Vec::new());
-    // JpegEncoder::new(&mut result_buf)
-    T::new(&mut result_buf)
+    JpegEncoder::new(&mut result_buf)
         .write_image(
             dst_image.buffer(),
             dst_width.get(),
@@ -125,6 +97,29 @@ fn optimize_jpeg(jpeg_data: Vec<u8>, dst_path: &PathBuf, quality: i32) {
     let img: image::RgbaImage = turbojpeg::decompress_image(&jpeg_data).unwrap();
     let jpeg_data = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
     fs::write(dst_path, &jpeg_data).unwrap();
+}
+
+fn process_jpeg(
+    src_path: &Path,
+    dst_path: PathBuf,
+    resize: bool,
+    quality: i32,
+    lock: &mut StdoutLock,
+) {
+    let jpeg_data = match resize {
+        true => resize_image(src_path),
+        false => fs::read(src_path).unwrap(),
+    };
+    optimize_jpeg(jpeg_data, &dst_path, quality);
+
+    // TODO: See if you can extract this writeln.
+    writeln!(
+        lock,
+        "Resized \"{}\" to \"{}\".",
+        src_path.display(),
+        dst_path.display()
+    )
+    .expect("Failed to write to stdout.");
 }
 
 // TODO: Remove!
@@ -156,24 +151,7 @@ fn different_paths(
             fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
 
             match extension.to_string_lossy().to_lowercase().as_str() {
-                "jpg" | "jpeg" => {
-                    // TODO: Consider adding `process_jpeg()`.
-                    if resize {
-                        let jpeg_data = resize_image::<JpegEncoder<dyn Write>>(src_path);
-                        optimize_jpeg(jpeg_data, &dst_path, quality);
-                    } else {
-                        let jpeg_data = fs::read(src_path).unwrap();
-                        optimize_jpeg(jpeg_data, &dst_path, quality);
-                    }
-
-                    writeln!(
-                        lock,
-                        "Resized \"{}\" to \"{}\".",
-                        src_path.display(),
-                        dst_path.display()
-                    )
-                    .expect("Failed to write to stdout.");
-                }
+                "jpg" | "jpeg" => process_jpeg(src_path, dst_path, resize, quality, &mut lock),
 
                 "png" => {
                     // TODO: Consider adding `process_png()`.
