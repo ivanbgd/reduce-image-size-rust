@@ -26,7 +26,7 @@ fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = wal
     .filter(|entry| entry.file_type().is_file())
 }
 
-fn resize_image(src_path: &Path, extension: &str) -> Result<Vec<u8>, Box<dyn Error>> {
+fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     let img = ImageReader::open(src_path)?
         .with_guessed_format()?
         .decode()?;
@@ -56,11 +56,10 @@ fn resize_image(src_path: &Path, extension: &str) -> Result<Vec<u8>, Box<dyn Err
 
     let mut result_buf = BufWriter::new(Vec::new());
 
-    // let extension = src_path
-    //     .extension()
-    //     .expect("Expected the file to have an extension at this point!");
-    // match extension.to_string_lossy().to_lowercase().as_str() {
-    match extension {
+    let extension = src_path
+        .extension()
+        .expect("Expected the file to have an extension at this point!");
+    match extension.to_string_lossy().to_lowercase().as_str() {
         "jpg" | "jpeg" => JpegEncoder::new(&mut result_buf).write_image(
             dst_image.buffer(),
             dst_width.get(),
@@ -81,82 +80,17 @@ fn resize_image(src_path: &Path, extension: &str) -> Result<Vec<u8>, Box<dyn Err
     Ok(result)
 }
 
-// // TODO: Add error-handling.
-// fn process_jpeg(
-//     src_path: &Path,
-//     dst_path: PathBuf,
-//     resize: bool,
-//     quality: i32,
-//     lock: &mut StdoutLock,
-// ) -> Result<(), Box<dyn Error>> {
-//     let image_data = match resize {
-//         true => match resize_image(src_path) {
-//             Ok(data) => data,
-//             Err(err) => {
-//                 writeln!(
-//                     lock,
-//                     "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
-//                      \tWill attempt to optimize the image without resizing it.",
-//                     src_path.display(),
-//                     err
-//                 )
-//                 .expect("Failed to write to stdout.");
-//                 fs::read(src_path)?
-//             }
-//         },
-//         false => fs::read(src_path)?,
-//     };
-//
-//     let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
-//     let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-//
-//     fs::write(&dst_path, &optimized).unwrap();
-//
-//     // TODO: See if you can extract this writeln.
-//     writeln!(
-//         lock,
-//         "Reduced \"{}\" to \"{}\".",
-//         src_path.display(),
-//         dst_path.display()
-//     )
-//     .expect("Failed to write to stdout.");
-//
-//     Ok(())
-// }
-//
-// // TODO: Add error-handling.
-// fn process_png(src_path: &Path, dst_path: PathBuf, resize: bool, lock: &mut StdoutLock) {
-//     let image_data = match resize {
-//         true => resize_image(src_path).unwrap(),
-//         false => vec![], //fs::read(src_path).unwrap(),
-//     };
-//
-//     match optimize_from_memory(&image_data, &Options::default()) {
-//         Ok(optimized) => {
-//             fs::write(&dst_path, optimized).unwrap();
-//             writeln!(
-//                 lock,
-//                 "Reduced \"{}\" to \"{}\".",
-//                 src_path.display(),
-//                 dst_path.display()
-//             )
-//             .expect("Failed to write to stdout.")
-//         }
-//         Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
-//     }
-// }
-
 // TODO: Add error-handling.
-fn process_single_image(
+fn process_jpeg(
     src_path: &Path,
     dst_path: PathBuf,
     resize: bool,
     quality: i32,
-    extension: &str,
     lock: &mut StdoutLock,
 ) -> Result<(), Box<dyn Error>> {
+    // TODO: Try to extract this first part. Perhaps just add a wrapper?
     let image_data = match resize {
-        true => match resize_image(src_path, extension) {
+        true => match resize_image(src_path) {
             Ok(data) => data,
             Err(err) => {
                 writeln!(
@@ -173,20 +107,12 @@ fn process_single_image(
         false => fs::read(src_path)?,
     };
 
-    match extension {
-        "jpg" | "jpeg" => {
-            let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
-            let optimized =
-                turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
-            fs::write(&dst_path, &optimized).unwrap();
-        }
-        "png" => {
-            let optimized = optimize_from_memory(&image_data, &Options::default()).unwrap();
-            fs::write(&dst_path, optimized).unwrap();
-        }
-        _ => return Ok(()), // panic!("Unsupported image format (file extension): {:?}", extension),
-    };
+    let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
+    let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
 
+    fs::write(&dst_path, &optimized).unwrap();
+
+    // TODO: See if you can extract this writeln. I should extract it to the caller, because it should vary.
     writeln!(
         lock,
         "Reduced \"{}\" to \"{}\".",
@@ -194,6 +120,59 @@ fn process_single_image(
         dst_path.display()
     )
     .expect("Failed to write to stdout.");
+
+    Ok(())
+}
+
+// TODO: Add error-handling.
+fn process_png(
+    src_path: &Path,
+    dst_path: PathBuf,
+    resize: bool,
+    lock: &mut StdoutLock,
+) -> Result<(), Box<dyn Error>> {
+    // TODO: Try to extract this first part. Perhaps just add a wrapper?
+    let image_data = match resize {
+        true => match resize_image(src_path) {
+            Ok(data) => data,
+            Err(err) => {
+                writeln!(
+                    lock,
+                    "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
+                     \tWill attempt to optimize the image without resizing it.",
+                    src_path.display(),
+                    err
+                )
+                .expect("Failed to write to stdout.");
+                fs::read(src_path)?
+            }
+        },
+        false => fs::read(src_path)?,
+    };
+
+    // let image_data = match resize {
+    //     true => resize_image(src_path).unwrap(),
+    //     false => vec![], //fs::read(src_path).unwrap(),
+    // };
+
+    // TODO: See if you can extract this writeln. I should extract it to the caller, because it should vary.
+    // TODO: Try to bubble-up result.
+    optimize_from_memory(&image_data, &Options::default())?;
+
+    // ///
+    match optimize_from_memory(&image_data, &Options::default()) {
+        Ok(optimized) => {
+            fs::write(&dst_path, optimized).unwrap();
+            writeln!(
+                lock,
+                "Reduced \"{}\" to \"{}\".",
+                src_path.display(),
+                dst_path.display()
+            )
+            .expect("Failed to write to stdout.")
+        }
+        Err(err) => writeln!(lock, "{}", err).expect("Failed to write to stdout."),
+    }
 
     Ok(())
 }
@@ -216,16 +195,20 @@ fn different_paths(
                 .join(diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap());
             fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
 
-            let extension = extension.to_string_lossy().to_lowercase();
-            let extension = extension.as_str();
-            process_single_image(src_path, dst_path, resize, quality, extension, &mut lock)
-                .unwrap();
+            // let extension = extension.to_string_lossy().to_lowercase();
+            // let extension = extension.as_str();
+            // process_single_image(src_path, dst_path, resize, quality, extension, &mut lock)
+            //     .unwrap();
 
-            // match extension.to_string_lossy().to_lowercase().as_str() {
-            //     "jpg" | "jpeg" => process_jpeg(src_path, dst_path, resize, quality, &mut lock),
-            //     "png" => process_png(src_path, dst_path, resize, &mut lock),
-            //     _ => (),
-            // }
+            // TODO: Perhaps add a very simple `process_single_image()` - a thin wrapper/logic.
+            // TODO: Or, consider checking for dst == src, but through a flag that's set only once.
+            match extension.to_string_lossy().to_lowercase().as_str() {
+                "jpg" | "jpeg" => {
+                    process_jpeg(src_path, dst_path, resize, quality, &mut lock).unwrap()
+                }
+                "png" => process_png(src_path, dst_path, resize, &mut lock),
+                _ => (),
+            }
         }
     }
 }
@@ -252,3 +235,55 @@ pub fn process_images(
         // same_paths(src_dir, recursive, resize, quality);
     }
 }
+
+// // TODO: Add error-handling.
+// fn process_single_image(
+//     src_path: &Path,
+//     dst_path: PathBuf,
+//     resize: bool,
+//     quality: i32,
+//     extension: &str,
+//     lock: &mut StdoutLock,
+// ) -> Result<(), Box<dyn Error>> {
+//     let image_data = match resize {
+//         true => match resize_image(src_path, extension) {
+//             Ok(data) => data,
+//             Err(err) => {
+//                 writeln!(
+//                     lock,
+//                     "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
+//                      \tWill attempt to optimize the image without resizing it.",
+//                     src_path.display(),
+//                     err
+//                 )
+//                 .expect("Failed to write to stdout.");
+//                 fs::read(src_path)?
+//             }
+//         },
+//         false => fs::read(src_path)?,
+//     };
+//
+//     match extension {
+//         "jpg" | "jpeg" => {
+//             let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
+//             let optimized =
+//                 turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+//             fs::write(&dst_path, &optimized).unwrap();
+//         }
+//         "png" => {
+//             let optimized = optimize_from_memory(&image_data, &Options::default()).unwrap();
+//             fs::write(&dst_path, optimized).unwrap();
+//         }
+//         _ => return Ok(()), // panic!("Unsupported image format (file extension): {:?}", extension),
+//     };
+//
+//     writeln!(
+//         lock,
+//         "Reduced \"{}\" to \"{}\".",
+//         src_path.display(),
+//         dst_path.display()
+//     )
+//     .expect("Failed to write to stdout.");
+//
+//     Ok(())
+// }
