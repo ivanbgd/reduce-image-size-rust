@@ -26,6 +26,7 @@ fn get_file_list(src_dir: &Path, recursive: bool) -> impl Iterator<Item = walkdi
     .filter(|entry| entry.file_type().is_file())
 }
 
+/// Reduces the image dimensions in half.
 fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     let img = ImageReader::open(src_path)?
         .with_guessed_format()?
@@ -109,6 +110,10 @@ fn get_image_data(
     }
 }
 
+/// Reduces size of a JPEG image file.
+///
+/// Resizes the image first if that option was set.
+/// Optimizes the image quality and file size.
 fn process_jpeg(
     src_path: &Path,
     dst_path: &Path,
@@ -126,6 +131,10 @@ fn process_jpeg(
     Ok(())
 }
 
+/// Reduces size of a PNG image file.
+///
+/// Resizes the image first if that option was set.
+/// Optimizes the image quality and file size.
 fn process_png(
     src_path: &Path,
     dst_path: &Path,
@@ -141,6 +150,10 @@ fn process_png(
     Ok(())
 }
 
+/// Prints a success message to `stdout`.
+///
+/// Varies the message output depending on whether the source and
+/// destination paths are same or different.
 fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: &mut StdoutLock) {
     match different_paths {
         true => writeln!(
@@ -155,6 +168,10 @@ fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: 
     }
 }
 
+/// Prints an error message to `stdout`.
+///
+/// Wraps around the received error message,
+/// and notifies the end user that the image file will be skipped.
 fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
     writeln!(
         lock,
@@ -166,6 +183,9 @@ fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
     .expect("Failed to write to stdout.")
 }
 
+/// Loops over files and calls appropriate functions for processing images.
+/// Processing consists of optional resizing first, and of optimizing images
+/// in order to reduce the file size.
 pub fn process_images(
     src_dir: PathBuf,
     dst_dir: PathBuf,
