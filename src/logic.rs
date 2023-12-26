@@ -14,7 +14,7 @@ use walkdir::WalkDir;
 
 /// Returns an iterator over the list of files under the `src_dir`, recursively or not.
 /// Doesn't return subdirectories, but only files.
-fn get_file_list(src_dir: &PathBuf, recursive: bool) -> impl Iterator<Item = walkdir::DirEntry> {
+fn get_file_list(src_dir: &Path, recursive: bool) -> impl Iterator<Item = walkdir::DirEntry> {
     match recursive {
         true => WalkDir::new(src_dir).into_iter().filter_map(Result::ok),
         false => WalkDir::new(src_dir)
@@ -80,23 +80,6 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     Ok(result)
 }
 
-fn read_file(src_path: &Path, lock: &mut StdoutLock) -> Option<Vec<u8>> {
-    match fs::read(src_path) {
-        Ok(data) => Some(data),
-        Err(err) => {
-            writeln!(
-                lock,
-                "\t[ERROR] Trying to read \"{}\" failed with the following error: {}.\n\
-                 \tSkipping that file.",
-                src_path.display(),
-                err
-            )
-            .expect("Failed to write to stdout.");
-            None
-        }
-    }
-}
-
 /// In case `resize` is `true`, tries to resize the image.
 /// If that succeeds, returns the resized image data.
 ///
@@ -106,81 +89,81 @@ fn get_image_data(
     src_path: &Path,
     resize: bool,
     lock: &mut StdoutLock,
-    // ) -> Result<Option<Vec<u8>>, std::io::Error> { ///
-) -> Option<Vec<u8>> {
-    // let src_path = Path::new("a.b"); // ///
+) -> Result<Vec<u8>, std::io::Error> {
     match resize {
         true => match resize_image(src_path) {
-            Ok(data) => Some(data),
+            Ok(data) => Ok(data),
             Err(err) => {
                 writeln!(
                     lock,
                     "\t[ERROR] Trying to resize \"{}\" failed with the following error: {}.\n\
-                     \tWill attempt to reduce the image file size without resizing the image.",
+                     \tWill attempt to reduce the file size of the image without resizing the image.",
                     src_path.display(),
                     err
                 )
                 .expect("Failed to write to stdout.");
-                read_file(src_path, lock)
+                fs::read(src_path)
             }
         },
-        false => read_file(src_path, lock),
+        false => fs::read(src_path),
     }
 }
 
-// TODO: Add error-handling.
 fn process_jpeg(
     src_path: &Path,
-    dst_path: &PathBuf,
+    dst_path: &Path,
     resize: bool,
     quality: i32,
     lock: &mut StdoutLock,
-) -> bool {
-    let image_data = match get_image_data(src_path, resize, lock) {
-        Some(data) => data,
-        None => return false,
-    };
+) -> Result<(), Box<dyn Error>> {
+    let image_data = get_image_data(src_path, resize, lock)?;
 
-    let img: image::RgbaImage = turbojpeg::decompress_image(&image_data).unwrap();
-    let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2).unwrap();
+    let img: image::RgbaImage = turbojpeg::decompress_image(&image_data)?;
+    let optimized = turbojpeg::compress_image(&img, quality, turbojpeg::Subsamp::Sub2x2)?;
 
-    fs::write(dst_path, &optimized).unwrap();
+    fs::write(dst_path, &optimized)?;
 
-    true
+    Ok(())
 }
 
-fn process_png(src_path: &Path, dst_path: &PathBuf, resize: bool, lock: &mut StdoutLock) -> bool {
-    // ) -> Result<(), Box<dyn Error>> { ///
-    let mut success = false;
+fn process_png(
+    src_path: &Path,
+    dst_path: &Path,
+    resize: bool,
+    lock: &mut StdoutLock,
+) -> Result<(), Box<dyn Error>> {
+    let image_data = get_image_data(src_path, resize, lock)?;
 
-    let image_data = match get_image_data(src_path, resize, lock) {
-        Some(data) => data,
-        None => return false,
-    };
+    let optimized = optimize_from_memory(&image_data, &Options::default())?;
 
-    match optimize_from_memory(&image_data, &Options::default()) {
-        Ok(optimized) => match fs::write(dst_path, optimized) {
-            Ok(_) => success = true,
-            Err(err) => writeln!(
-                lock,
-                "\t[ERROR] Trying to write \"{}\" failed with the following error: {}.\n\
-                 \tSkipping that file.",
-                src_path.display(),
-                err
-            )
-            .expect("Failed to write to stdout."),
-        },
-        Err(err) => writeln!(
+    fs::write(dst_path, optimized)?;
+
+    Ok(())
+}
+
+fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: &mut StdoutLock) {
+    match different_paths {
+        true => writeln!(
             lock,
-            "\t[ERROR] Trying to optimize \"{}\" failed with the following error: {}.\n\
-             \tSkipping that file.",
+            "Reduced \"{}\" to \"{}\".",
             src_path.display(),
-            err
+            dst_path.display()
         )
         .expect("Failed to write to stdout."),
+        false => writeln!(lock, "Reduced \"{}\".", src_path.display())
+            .expect("Failed to write to stdout."),
     }
+}
 
-    success
+fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
+    writeln!(
+        lock,
+        "\t[ERROR] Trying to reduce size of \"{}\" failed with the following error: {}.\n\
+         \tSkipping that file.\n",
+        src_path.display(),
+        err
+    )
+    .expect("Failed to write to stdout.")
 }
 
 pub fn process_images(
@@ -199,7 +182,7 @@ pub fn process_images(
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
         if let Some(extension) = src_path.extension() {
-            let mut dst_path = PathBuf::from(src_path); // TODO: Try with &Path!
+            let mut dst_path = PathBuf::from(src_path);
 
             if different_paths {
                 dst_path = dst_dir.as_path().join(
@@ -208,28 +191,18 @@ pub fn process_images(
                 fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
             }
 
-            let mut success = false;
-
             match extension.to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
-                    success = process_jpeg(src_path, &dst_path, resize, quality, &mut lock)
+                    match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
+                        Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
+                        Err(err) => print_error(src_path, err, &mut lock),
+                    }
                 }
-                "png" => success = process_png(src_path, &dst_path, resize, &mut lock),
+                "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
+                    Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
+                    Err(err) => print_error(src_path, err, &mut lock),
+                },
                 _ => (),
-            }
-
-            if success {
-                match different_paths {
-                    true => writeln!(
-                        lock,
-                        "Reduced \"{}\" to \"{}\".",
-                        src_path.display(),
-                        dst_path.display()
-                    )
-                    .expect("Failed to write to stdout."),
-                    false => writeln!(lock, "Reduced \"{}\".", src_path.display())
-                        .expect("Failed to write to stdout."),
-                }
             }
         }
     }

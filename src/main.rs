@@ -1,6 +1,5 @@
 //! The program's entry point.
 
-use std::fs;
 use std::path::Path;
 use std::time::Instant;
 
@@ -27,8 +26,6 @@ fn main() {
         );
         return;
     }
-
-    fs::create_dir_all(&dst_dir).unwrap();
 
     process_images(src_dir, dst_dir, recursive, resize, quality);
 
