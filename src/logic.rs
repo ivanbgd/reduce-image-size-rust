@@ -208,7 +208,24 @@ pub fn process_images(
                 dst_path = dst_dir.as_path().join(
                     diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
                 );
-                fs::create_dir_all(dst_path.parent().unwrap()).unwrap();
+
+                if let Some(parent) = dst_path.parent() {
+                    match fs::create_dir_all(parent) {
+                        Ok(_) => {}
+                        Err(err) => {
+                            let err = format!(
+                                "\n\tFailed to create the subdirectory {:?} with the following error: {}",
+                                parent, err
+                            );
+                            print_error(src_path, Box::from(err), &mut lock);
+                            continue;
+                        }
+                    };
+                } else {
+                    let err_msg = format!("Destination path {:?} doesn't have a parent.", dst_path);
+                    print_error(src_path, Box::from(err_msg), &mut lock);
+                    continue;
+                };
             }
 
             match extension.to_string_lossy().to_lowercase().as_str() {
