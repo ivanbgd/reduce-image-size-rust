@@ -154,6 +154,7 @@ fn process_png(
 ///
 /// Varies the message output depending on whether the source and
 /// destination paths are same or different.
+#[inline]
 fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: &mut StdoutLock) {
     match different_paths {
         true => writeln!(
@@ -172,6 +173,7 @@ fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: 
 ///
 /// Wraps around the received error message,
 /// and notifies the end user that the image file will be skipped.
+#[inline]
 fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
     writeln!(
         lock,
