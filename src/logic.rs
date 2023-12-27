@@ -35,8 +35,8 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     let height = img.height();
 
     let mut src_image = fr::Image::from_vec_u8(
-        NonZeroU32::new(width).unwrap(),
-        NonZeroU32::new(height).unwrap(),
+        NonZeroU32::new(width).expect("Expected NonZeroU32."),
+        NonZeroU32::new(height).expect("Expected NonZeroU32."),
         img.to_rgba8().into_raw(),
         fr::PixelType::U8x4,
     )?;
@@ -44,8 +44,8 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     let alpha_mul_div = fr::MulDiv::default();
     alpha_mul_div.multiply_alpha_inplace(&mut src_image.view_mut())?;
 
-    let dst_width = NonZeroU32::new(width / 2).unwrap();
-    let dst_height = NonZeroU32::new(height / 2).unwrap();
+    let dst_width = NonZeroU32::new(width / 2).expect("Expected NonZeroU32.");
+    let dst_height = NonZeroU32::new(height / 2).expect("Expected NonZeroU32.");
     let mut dst_image = fr::Image::new(dst_width, dst_height, src_image.pixel_type());
 
     let mut dst_view = dst_image.view_mut();
@@ -206,7 +206,11 @@ pub fn process_images(
 
             if different_paths {
                 dst_path = dst_dir.as_path().join(
-                    diff_paths(src_path.to_str().unwrap(), src_dir.to_str().unwrap()).unwrap(),
+                    diff_paths(
+                        src_path.to_str().expect("Expected some src_path."),
+                        src_dir.to_str().expect("Expected some src_dir."),
+                    )
+                    .expect("Expected diff_paths() to work."),
                 );
 
                 if let Some(parent) = dst_path.parent() {
