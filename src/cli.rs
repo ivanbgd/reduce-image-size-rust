@@ -1,3 +1,5 @@
+//! The CLI arguments parser.
+
 use std::path::PathBuf;
 
 use clap::Parser;

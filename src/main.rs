@@ -1,4 +1,6 @@
-//! The program's entry point.
+//! Reduces size of images in a folder (and optionally sub-folders, recursively).
+//!
+//! The binary (executable) crate.
 
 use std::path::Path;
 use std::time::Instant;
@@ -9,6 +11,9 @@ use reduce_image_size::cli::Args;
 use reduce_image_size::logic::process_images;
 
 /// The program's entry point.
+///
+/// Parses CLI arguments, calls the image processing function,
+/// and in the end prints the total execution time.
 fn main() {
     let start = Instant::now();
 

@@ -1,3 +1,5 @@
+//! The main business logic (public) and helper functions (private).
+
 use std::error::Error;
 use std::fs;
 use std::io::{stdout, BufWriter, StdoutLock, Write};
@@ -185,9 +187,17 @@ fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
     .expect("Failed to write to stdout.")
 }
 
+/// The main business logic.
 /// Loops over files and calls appropriate functions for processing images.
 /// Processing consists of optional resizing first, and of optimizing images
 /// in order to reduce the file size.
+/// Supported image formats: JPEG, PNG.
+///
+/// * `src_dir` - Source directory path with the original images, [`PathBuf`].
+/// * `dst_dir` - Destination directory path with the reduced-size images, [`PathBuf`].
+/// * `recursive` - Whether to look into entire directory sub-tree.
+/// * `resize` - Whether to resize image dimensions.
+/// * `quality` - JPEG image quality. Ignored in case of PNGs.
 pub fn process_images(
     src_dir: PathBuf,
     dst_dir: PathBuf,
@@ -199,6 +209,9 @@ pub fn process_images(
     stdout().flush().expect("Failed to flush stdout.");
 
     let different_paths = src_dir != dst_dir;
+
+    // The `lock` is used in combination with `writeln!` for printing to `stdout` in a loop.
+    // This is faster than `println!` in a loop.
     let mut lock = stdout().lock();
 
     for src_path in get_file_list(&src_dir, recursive) {
