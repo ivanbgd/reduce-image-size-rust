@@ -211,7 +211,7 @@ pub fn process_images(
     let different_paths = src_dir != dst_dir;
 
     // The `lock` is used in combination with `writeln!` for printing to `stdout` in a loop.
-    // This is faster than `println!` in a loop.
+    // This is faster than `println!` in a hot loop, because we now only lock `stdout` once.
     let mut lock = stdout().lock();
 
     for src_path in get_file_list(&src_dir, recursive) {

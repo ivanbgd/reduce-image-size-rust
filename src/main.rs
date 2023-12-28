@@ -1,3 +1,5 @@
+//! # Reduce Image Size
+//!
 //! Reduces size of images in a folder (and optionally sub-folders, recursively).
 //!
 //! The binary (executable) crate.

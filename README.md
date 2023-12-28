@@ -46,8 +46,26 @@ Paths to the source and destination folders can be absolute or relative.
 This section applies in case you don't have an executable and need to build it.  
 It doesn't depend on the OS.
 
+The library and the application require:
+- [CMake](https://cmake.org/download/)
+- [nasm](https://www.nasm.us/)
+
 Make sure to build the application in `release` mode as it will run much faster that way.
 
+Build:
+```shell
+cargo build --release
+```
+
+Run:
 ```shell
 cargo run --release -- <source_folder> <destination_folder> [options]
 ```
+
+## Library
+This Rust crate was originally meant as a binary (executable) crate, i.e., an application,
+but it was later decided to publish the library part, so it can be used as a Rust library, too.
+
+Only the main image processing function, `process_images`, has been made public.
+
+Helper functions have been made private.

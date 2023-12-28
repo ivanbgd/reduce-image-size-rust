@@ -6,6 +6,8 @@ authors = ["Ivan Lazarević"]
 description = "Reduces size of images in a folder (and optionally sub-folders, recursively)."
 repository = "https://github.com/ivanbgd/reduce-image-size-rust"
 license = "MIT"
+keywords = ["image", "images", "photo", "jpeg", "png"]
+categories = ["computer-vision", "multimedia", "multimedia::images"]
 
 [lib]
 path = "src/lib.rs"
