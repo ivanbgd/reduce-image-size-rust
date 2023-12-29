@@ -6,6 +6,7 @@ permissions:
 on:
   push:
     # Only supports tags - it doesn't support pushing a branch.
+    # It can only be triggered when a tag is pushed or created on GitHub.
     tags:
       - v[0-9]+.*
 
@@ -15,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
-          #with:
+        with:
           # (optional)
-        #changelog: CHANGELOG.md
+          changelog: CHANGELOG.md
         env:
           # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
