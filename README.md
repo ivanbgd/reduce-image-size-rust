@@ -31,11 +31,19 @@ Tested on an x86-64 CPU with Windows 11 with JPEGs and PNGs.
 Other OSes haven't been tested, but should work.
 
 ## Running the Application
-### Windows
-If you have an executable, go to the directory with the executable and run the program as:  
+Executable files for Windows, Linux and macOS can be downloaded from
+the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page of the repository.
+
+Use the latest release version.
+
+Download the appropriate archive for your OS and unpack it to a desired folder.
+
+The archive files contain an executable.
+
+After unpacking the archive, go to the directory with the executable and run the program as:  
 
 ```shell
-reduce_image_size.exe <source_folder> <destination_folder> [options]
+reduce_image_size <source_folder> <destination_folder> [options]
 ```
 
 Or, provide full path to the program.
