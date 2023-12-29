@@ -1,7 +1,11 @@
 name: Release
 
+permissions:
+  contents: write
+
 on:
   push:
+    # Only supports tags - it doesn't support pushing a branch.
     tags:
       - v[0-9]+.*
 
@@ -9,7 +13,7 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: taiki-e/create-gh-release-action@v1
           #with:
           # (optional)
@@ -29,7 +33,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: ilammy/setup-nasm@v1
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           # (required)
