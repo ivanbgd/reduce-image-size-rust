@@ -1,5 +1,6 @@
 # Reduce Image Size
 
+## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
 
 Supports JPEG and PNG formats.
@@ -21,13 +22,15 @@ A user can experiment with the `resize` and the `quality` arguments.
 Also, the user can go only one level deep and not recursively, or simply experiment on a copy of an image folder.  
 If satisfied with the result, original images can be deleted afterwards easily to save disk and/or cloud space.
 
-Options:
+## Options
 - Look into subdirectories recursively (process the entire tree); recommended: `-r`, `--recursive`
 - Reduce both image dimensions by half: `--resize`
 - JPEG quality, on a scale from 1 (worst) to 100 (best); the default is 75; ignored in case of PNGs: `--quality <QUALITY>`
 
+## Notes
 Developed in Rust 1.74.1.  
 Tested on an x86-64 CPU with Windows 11 with JPEGs and PNGs.  
+Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11.  
 Other OSes haven't been tested, but should work.
 
 ## Running the Application
@@ -50,7 +53,7 @@ Or, provide full path to the program.
 
 Paths to the source and destination folders can be absolute or relative.
 
-### Building the Application and Running it With cargo
+## Building the Application and Running it With cargo
 This section applies in case you don't have an executable and need to build it.  
 It doesn't depend on the OS.
 
