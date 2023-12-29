@@ -20,6 +20,7 @@ jobs:
 
   upload-assets:
     strategy:
+      fail-fast: false # don't fail other jobs if one fails
       matrix:
         os:
           - ubuntu-latest
