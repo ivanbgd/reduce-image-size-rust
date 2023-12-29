@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v[0-9]+.*
+    branches:
+      - main
 
 jobs:
   create-release:
@@ -31,7 +33,7 @@ jobs:
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
           # (required)
-          bin: playlist-manager
+          bin: reduce_image_size
           # (optional) On which platform to distribute the `.tar.gz` file.
           # [default value: unix]
           # [possible values: all, unix, windows, none]
