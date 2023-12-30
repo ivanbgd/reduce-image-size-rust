@@ -1,5 +1,7 @@
 # Reduce Image Size
 
+[![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
+
 ## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
 
