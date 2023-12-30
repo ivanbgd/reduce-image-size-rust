@@ -28,10 +28,10 @@ If satisfied with the result, original images can be deleted afterwards easily t
 - JPEG quality, on a scale from 1 (worst) to 100 (best); the default is 75; ignored in case of PNGs: `--quality <QUALITY>`
 
 ## Notes
-Developed in Rust 1.74.1.  
-Tested on an x86-64 CPU with Windows 11 with JPEGs and PNGs.  
-Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11.  
-Other OSes haven't been tested, but should work.
+- Developed in Rust 1.74.1.
+- Tested on x86-64 CPUs with Windows 10 and Windows 11.
+- Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11.
+- Other OSes haven't been tested, but should work.
 
 ## Running the Application
 Executable files for Windows, Linux and macOS can be downloaded from
