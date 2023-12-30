@@ -19,7 +19,7 @@ jobs:
         with:
           # (optional)
           changelog: CHANGELOG.md
-          # (Optional) Format of title.
+          # (optional) Format of title.
           # [default value: $tag]
           # [possible values: variables $tag, $version, and any string]
           title: $version
@@ -41,7 +41,8 @@ jobs:
       - uses: ilammy/setup-nasm@v1
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          # (required)
+          # (required) Comma-separated list of binary names (non-extension portion of filename) to build and upload.
+          # Note that glob pattern is not supported yet.
           bin: reduce_image_size
           # (optional) On which platform to distribute the `.tar.gz` file.
           # [default value: unix]
