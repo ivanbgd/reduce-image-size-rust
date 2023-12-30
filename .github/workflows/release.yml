@@ -19,6 +19,10 @@ jobs:
         with:
           # (optional)
           changelog: CHANGELOG.md
+          # (Optional) Format of title.
+          # [default value: $tag]
+          # [possible values: variables $tag, $version, and any string]
+          title: $version
         env:
           # (required)
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
