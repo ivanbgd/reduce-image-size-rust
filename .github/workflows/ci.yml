@@ -12,6 +12,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+# We explicitly only allow the read permission for security reasons; no other permission is needed.
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs, which run in parallel by default.
 # Each job runs in a runner environment specified by runs-on.
 jobs:
@@ -32,6 +36,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
+        uses: ilammy/setup-nasm@v1
         run: cargo test
 
   fmt:
@@ -50,6 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: ilammy/setup-nasm@v1
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
