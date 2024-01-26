@@ -12,12 +12,12 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
-# We explicitly only allow the read permission for security reasons; no other permission is needed.
+# We explicitly allow only the read permission for security reasons; no other permission is needed.
 permissions:
   contents: read
 
 # A workflow run is made up of one or more jobs, which run in parallel by default.
-# Each job runs in a runner environment specified by runs-on.
+# Each job runs in a runner environment specified by `runs-on`.
 jobs:
 
   test:
@@ -29,11 +29,12 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      # This GitHub Action installs a Rust toolchain using rustup. It is designed for one-line concise usage and good defaults.
+      # This GitHub Action installs a Rust toolchain using "rustup".
+      # It is designed for one-line concise usage and good defaults.
       - name: Install the Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # A GitHub Action that implements smart caching for rust/cargo projects with sensible defaults
+      # A GitHub Action that implements smart caching for rust/cargo projects with sensible defaults.
       - name: Rust Cache Action
         uses: Swatinem/rust-cache@v2
 
