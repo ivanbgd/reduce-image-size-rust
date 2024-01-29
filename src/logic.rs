@@ -154,7 +154,7 @@ fn process_png(
 
 /// Prints a success message to `stdout`.
 ///
-/// Varies the message output depending on whether the source and
+/// Varies the message contents depending on whether the source and
 /// destination paths are same or different.
 #[inline]
 fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: &mut StdoutLock) {
@@ -227,7 +227,6 @@ fn copy_or_skip(
     }
 }
 
-// TODO: Get file size and compare. Then copy_or_skip(), but without `err`. It can be Optional. Pass `None`.
 /// The main business logic.
 /// Loops over files and calls appropriate functions for processing images.
 /// Processing consists of optional resizing first, and of optimizing images
@@ -250,7 +249,7 @@ pub fn process_images(
     recursive: bool,
     resize: bool,
     quality: i32,
-    _size: i32,
+    size: u64,
 ) -> bool {
     let mut has_error = false;
 
@@ -262,58 +261,67 @@ pub fn process_images(
 
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
-        if let Some(extension) = src_path.extension() {
-            let mut dst_path = PathBuf::from(src_path);
 
-            // TODO: Extract this into a function? See at the end. The `continue`s can be problematic.
-            // TODO: Return a Boolean flag? Or Option<PathBuf>, for dst_path?
-            // TODO: But, we shouldn't skip a file! We should copy it. Alright, but what if `mkdir` fails?
-            // TODO: Well, we can then abort the program. Currently, we are reporting the failure, which could be not only okay, but perhaps a better option.
-            if different_paths {
-                dst_path = dst_dir.as_path().join(
-                    diff_paths(
-                        src_path.to_str().expect("Expected some src_path."),
-                        src_dir.to_str().expect("Expected some src_dir."),
-                    )
-                    .expect("Expected diff_paths() to work."),
-                );
+        let mut dst_path = PathBuf::from(src_path);
 
-                if let Some(parent) = dst_path.parent() {
-                    match fs::create_dir_all(parent) {
-                        Ok(_) => {}
-                        Err(err) => {
-                            let err = format!(
-                                "\n\tFailed to create the subdirectory {:?} with the following error: {}",
-                                parent, err
-                            );
-                            set_and_print_error(
-                                src_path,
-                                Box::from(err),
-                                &mut lock,
-                                &mut has_error,
-                            );
-                            continue;
-                        }
-                    };
-                } else {
-                    let err_msg = format!("Destination path {:?} doesn't have a parent.", dst_path);
-                    set_and_print_error(src_path, Box::from(err_msg), &mut lock, &mut has_error);
-                    continue;
+        if different_paths {
+            dst_path = dst_dir.as_path().join(
+                diff_paths(
+                    src_path.to_str().expect("Expected some src_path."),
+                    src_dir.to_str().expect("Expected some src_dir."),
+                )
+                .expect("Expected diff_paths() to work."),
+            );
+
+            if let Some(parent) = dst_path.parent() {
+                match fs::create_dir_all(parent) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        let err = format!(
+                            "\n\tFailed to create the subdirectory {:?} with the following error: {}",
+                            parent, err
+                        );
+                        set_and_print_error(src_path, Box::from(err), &mut lock, &mut has_error);
+                        continue;
+                    }
                 };
-            }
+            } else {
+                let err_msg = format!("Destination path {:?} doesn't have a parent.", dst_path);
+                set_and_print_error(src_path, Box::from(err_msg), &mut lock, &mut has_error);
+                continue;
+            };
+        }
 
-            match extension.to_string_lossy().to_lowercase().as_str() {
+        let file_size = src_path.metadata().expect("Expected file metadata.").len();
+        let extension = src_path.extension();
+
+        // Copy or skip a file if it is not big enough, or has no extension, or if its extension is not supported.
+        if file_size >= size && extension.is_some() {
+            match extension.unwrap().to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
                     match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
                         Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                        Err(err) => set_and_print_error(src_path, err, &mut lock, &mut has_error), // TODO: Or copy_or_skip()? Pass `err` in and print it first, like in Python.
+                        Err(err) => copy_or_skip(
+                            src_path,
+                            &dst_path,
+                            different_paths,
+                            &mut lock,
+                            Some(err),
+                            &mut has_error,
+                        ),
                     }
                 }
                 "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
                     Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                    Err(err) => set_and_print_error(src_path, err, &mut lock, &mut has_error), // TODO: Or copy_or_skip()? Pass `err` in and print it first, like in Python.
+                    Err(err) => copy_or_skip(
+                        src_path,
+                        &dst_path,
+                        different_paths,
+                        &mut lock,
+                        Some(err),
+                        &mut has_error,
+                    ),
                 },
-                // _ => (), // TODO: copy_or_skip(), but without `err`? Pass `None`.
                 _ => copy_or_skip(
                     src_path,
                     &dst_path,
@@ -323,6 +331,15 @@ pub fn process_images(
                     &mut has_error,
                 ),
             }
+        } else {
+            copy_or_skip(
+                src_path,
+                &dst_path,
+                different_paths,
+                &mut lock,
+                None,
+                &mut has_error,
+            );
         }
     }
 

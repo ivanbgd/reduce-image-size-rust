@@ -33,7 +33,7 @@ fn main() {
         SizeCLI::S => Size::S,
         SizeCLI::M => Size::M,
         SizeCLI::L => Size::L,
-    } as i32;
+    } as u64;
 
     if Path::new(&dst_dir).is_file() {
         println!(
