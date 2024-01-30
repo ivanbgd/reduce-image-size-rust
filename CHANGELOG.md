@@ -7,8 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-01-30
+
+### Added
+
 - Optional argument for minimum file size for which a user would like to perform file size reduction.
-  - It can come in three sizes: S, M, L, for 100 kB, 500 kB and 1 MB, respectively.
+  - It comes in three sizes: S, M, L, for 100 kB, 500 kB and 1 MB, respectively.
+- Add some info messages: at startup, then for copying and for skipping files.
+- Add a closing message that warns users in case of an error.
+- GitHub action "ci.yml" ("release.yml" had already been there).
+
+### Changed
+
+- When source and destination folders are different, non-supported files will simply be copied to the destination.
+  - Previously, they would be left out.
+- Updated `README.md` with Examples and some new notes.
 
 ## [0.1.0] - 2023-12-29
 This is the very first (initial) fully-functioning version of the library and the program.

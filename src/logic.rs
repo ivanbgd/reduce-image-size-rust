@@ -154,7 +154,7 @@ fn process_png(
 
 /// Prints a success message to `stdout`.
 ///
-/// Varies the message output depending on whether the source and
+/// Varies the message contents depending on whether the source and
 /// destination paths are same or different.
 #[inline]
 fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: &mut StdoutLock) {
@@ -171,12 +171,19 @@ fn print_success(src_path: &Path, dst_path: &Path, different_paths: bool, lock: 
     }
 }
 
-/// Prints an error message to `stdout`.
+/// Sets the flag `has_error`. Prints an error message to `stdout`.
 ///
 /// Wraps around the received error message,
 /// and notifies the end user that the image file will be skipped.
 #[inline]
-fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
+fn set_and_print_error(
+    src_path: &Path,
+    err: Box<dyn Error>,
+    lock: &mut StdoutLock,
+    has_error: &mut bool,
+) {
+    *has_error = true;
+
     writeln!(
         lock,
         "\t[ERROR] Trying to reduce size of \"{}\" failed with the following error: {}.\n\
@@ -184,7 +191,40 @@ fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
         src_path.display(),
         err
     )
-    .expect("Failed to write to stdout.")
+    .expect("Failed to write to stdout.");
+}
+
+/// Copies a file in case of different source and destination paths.
+///
+/// Skips a file in case of same source and destination path.
+///
+/// Prints an info message in either case.
+fn copy_or_skip(
+    src_path: &Path,
+    dst_path: &Path,
+    different_paths: bool,
+    lock: &mut StdoutLock,
+    err: Option<Box<dyn Error>>,
+    has_error: &mut bool,
+) {
+    if let Some(error) = err {
+        writeln!(lock, "{}", error).expect("Failed to write to stdout.");
+    };
+
+    if different_paths {
+        match fs::copy(src_path, dst_path) {
+            Ok(_) => writeln!(
+                lock,
+                "Copied \"{}\" to \"{}\".",
+                src_path.display(),
+                dst_path.display()
+            )
+            .expect("Failed to write to stdout."),
+            Err(e) => set_and_print_error(src_path, Box::from(e), lock, has_error),
+        };
+    } else {
+        writeln!(lock, "Skipped \"{}\".", src_path.display()).expect("Failed to write to stdout.");
+    }
 }
 
 /// The main business logic.
@@ -198,15 +238,20 @@ fn print_error(src_path: &Path, err: Box<dyn Error>, lock: &mut StdoutLock) {
 /// * `recursive` - Whether to look into entire directory sub-tree.
 /// * `resize` - Whether to resize image dimensions.
 /// * `quality` - JPEG image quality. Ignored in case of PNGs.
+///
+/// Returns `bool` stating whether there was any error in trying to reduce size of a file or to copy it.
+/// This `bool` can be `true` only in case where source and destination directories are different,
+/// because in case where they are same and a file cannot have its size reduced, it will be left intact
+/// in its source directory.
 pub fn process_images(
     src_dir: PathBuf,
     dst_dir: PathBuf,
     recursive: bool,
     resize: bool,
     quality: i32,
-) {
-    println!("JPEG quality = {quality}\n");
-    stdout().flush().expect("Failed to flush stdout.");
+    size: u64,
+) -> bool {
+    let mut has_error = false;
 
     let different_paths = src_dir != dst_dir;
 
@@ -216,50 +261,87 @@ pub fn process_images(
 
     for src_path in get_file_list(&src_dir, recursive) {
         let src_path = src_path.path();
-        if let Some(extension) = src_path.extension() {
-            let mut dst_path = PathBuf::from(src_path);
 
-            if different_paths {
-                dst_path = dst_dir.as_path().join(
-                    diff_paths(
-                        src_path.to_str().expect("Expected some src_path."),
-                        src_dir.to_str().expect("Expected some src_dir."),
-                    )
-                    .expect("Expected diff_paths() to work."),
-                );
+        let mut dst_path = PathBuf::from(src_path);
 
-                if let Some(parent) = dst_path.parent() {
-                    match fs::create_dir_all(parent) {
-                        Ok(_) => {}
-                        Err(err) => {
-                            let err = format!(
-                                "\n\tFailed to create the subdirectory {:?} with the following error: {}",
-                                parent, err
-                            );
-                            print_error(src_path, Box::from(err), &mut lock);
-                            continue;
-                        }
-                    };
-                } else {
-                    let err_msg = format!("Destination path {:?} doesn't have a parent.", dst_path);
-                    print_error(src_path, Box::from(err_msg), &mut lock);
-                    continue;
+        if different_paths {
+            dst_path = dst_dir.as_path().join(
+                diff_paths(
+                    src_path.to_str().expect("Expected some src_path."),
+                    src_dir.to_str().expect("Expected some src_dir."),
+                )
+                .expect("Expected diff_paths() to work."),
+            );
+
+            if let Some(parent) = dst_path.parent() {
+                match fs::create_dir_all(parent) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        let err = format!(
+                            "\n\tFailed to create the subdirectory {:?} with the following error: {}",
+                            parent, err
+                        );
+                        set_and_print_error(src_path, Box::from(err), &mut lock, &mut has_error);
+                        continue;
+                    }
                 };
-            }
+            } else {
+                let err_msg = format!("Destination path {:?} doesn't have a parent.", dst_path);
+                set_and_print_error(src_path, Box::from(err_msg), &mut lock, &mut has_error);
+                continue;
+            };
+        }
 
-            match extension.to_string_lossy().to_lowercase().as_str() {
+        let file_size = src_path.metadata().expect("Expected file metadata.").len();
+        let extension = src_path.extension();
+
+        // Copy or skip a file if it is not large enough, or has no extension, or if its extension is not supported.
+        if file_size >= size && extension.is_some() {
+            match extension.unwrap().to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
                     match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
                         Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                        Err(err) => print_error(src_path, err, &mut lock),
+                        Err(err) => copy_or_skip(
+                            src_path,
+                            &dst_path,
+                            different_paths,
+                            &mut lock,
+                            Some(err),
+                            &mut has_error,
+                        ),
                     }
                 }
                 "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
                     Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                    Err(err) => print_error(src_path, err, &mut lock),
+                    Err(err) => copy_or_skip(
+                        src_path,
+                        &dst_path,
+                        different_paths,
+                        &mut lock,
+                        Some(err),
+                        &mut has_error,
+                    ),
                 },
-                _ => (),
+                _ => copy_or_skip(
+                    src_path,
+                    &dst_path,
+                    different_paths,
+                    &mut lock,
+                    None,
+                    &mut has_error,
+                ),
             }
+        } else {
+            copy_or_skip(
+                src_path,
+                &dst_path,
+                different_paths,
+                &mut lock,
+                None,
+                &mut has_error,
+            );
         }
     }
+
+    has_error
 }
