@@ -35,7 +35,7 @@ If satisfied with the result, original images can be deleted afterwards easily t
 - A minimum file size for which a user would like to perform file size reduction: `-s {s,m,l,S,M,L}`, `--size {s,m,l,S,M,L}`
     - S = 100 kB, M = 500 kB, L = 1 MB
     - Files that are smaller than the designated size will simply be copied to the destination folder.
-    - If this option is left out, then all files are considered for size reduction; i.e., minimal size is 0.
+    - If this option is left out, then all files are considered for size reduction; i.e., minimal considered size is 0.
 
 ### Examples
 See below for how to prepare the application for running.  

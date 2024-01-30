@@ -54,7 +54,7 @@ fn main() {
     println!("\nTook {:.3?} to complete.", start.elapsed());
 
     if has_error {
-        println!("\nThere were some ERRORS and some files were skipped.");
+        println!("\nThere were some ERRORS and some files were SKIPPED.");
         println!("It was not possible to reduce their size OR to copy them.");
         println!("Please review the [ERROR] messages so you don't potentially lose those files.\n");
     }

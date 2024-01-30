@@ -295,7 +295,7 @@ pub fn process_images(
         let file_size = src_path.metadata().expect("Expected file metadata.").len();
         let extension = src_path.extension();
 
-        // Copy or skip a file if it is not big enough, or has no extension, or if its extension is not supported.
+        // Copy or skip a file if it is not large enough, or has no extension, or if its extension is not supported.
         if file_size >= size && extension.is_some() {
             match extension.unwrap().to_string_lossy().to_lowercase().as_str() {
                 "jpg" | "jpeg" => {
