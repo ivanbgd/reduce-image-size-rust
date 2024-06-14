@@ -7,10 +7,15 @@
 ## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
 
-Supports JPEG and PNG image formats, with the following file extensions (case-insensitive): `jpg`, `jpeg`, `png`.
-
 This is useful for archiving of photos, for example, as they look the same on a display even with a reduced file size.  
 This application reduces file sizes of images in bulk.
+
+Supports JPEG and PNG image formats, with the following file extensions (case-insensitive): `jpg`, `jpeg`, `png`.
+
+Supports Windows, macOS on Apple silicon and Linux.
+
+Executable files for Windows, macOS and Linux can be downloaded from
+the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page of the repository.
 
 By default, keeps the original images and creates copies with reduced file size.
 
@@ -52,19 +57,20 @@ The file paths in the examples are for Windows.
 - `reduce_image_size D:\img_src D:\img_dst --recursive --resize --quality 60 --size L`
 
 ## Notes
-- Developed in Rust 1.74.1.
+- Developed in Rust 1.74.1, but also tested later with Rust 1.77.2.
 - Tested on x86-64 CPUs on Windows 10 and Windows 11.
-- Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11.
-- Other OSes haven't been tested, but should work, at least on x86-64 CPUs.
-- Unfortunately, `nasm`, which is required and used in this project, only supports the x86-64 architecture,
-  as of June 2024.
-  - This means that Apple silicon, that is based on ARM, the M-series, is not supported, unfortunately.
+- Tested on Apple silicon, M2 Pro, on macOS Sonoma 14.5.
+- Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11 @ x86-64.
+- Linux wasn't tested directly, but should work, at least on x86-64 CPUs.
 
 ## Running the Application
-Executable files for Windows, Linux and macOS can be downloaded from
+Executable files for Windows, macOS and Linux can be downloaded from
 the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page of the repository.
 
 Use the latest release version.
+
+The version `0.2.0` contains a macOS binary for the x86-64 architecture.
+Later versions contain a macOS binary for Apple silicon, which is based on ARM.
 
 Download the appropriate archive for your OS and unpack it to a desired folder.
 
@@ -81,15 +87,17 @@ Or, provide full path to the program.
 Paths to the source and destination folders can be absolute or relative.
 
 ## Building the Application and Running it With cargo
-This section applies in case you don't have an executable and need to build it.  
-It doesn't depend on the OS.
+This section applies in case you don't have an executable and need to build it.
 
-**Note**: `nasm` supports only the x86-64 architecture, and not ARM, so Apple silicon CPUs, the M-series,
-are not supported, unfortunately.
+It may depend on the OS. Namely, while installation of `nasm` is needed on Windows, it is not needed on macOS.
+`nasm` doesn't support Apple silicon, but this crate works on macOS Sonoma 14.5 on Apple M2 Pro processor.
+Linux hasn't been tested. Also, macOS on x86 architecture hasn't been tested.
 
 The library and the application require:
 - [CMake](https://cmake.org/download/)
-- [nasm](https://www.nasm.us/)
+- [nasm](https://www.nasm.us/), on Windows
+
+Add `CMake` to the `PATH` environment variable.
 
 Make sure to build the application in `release` mode as it will run much faster that way.
 
@@ -107,6 +115,6 @@ cargo run --release -- <source_folder> <destination_folder> [options]
 This Rust crate was originally meant as a binary (executable) crate, i.e., an application,
 but it was later decided to publish the library part, so it can be used as a Rust library, too.
 
-Only the main image processing function, `process_images`, has been made public.
+Only the main image-processing function, `process_images`, has been made public.
 
 Helper functions have been made private.

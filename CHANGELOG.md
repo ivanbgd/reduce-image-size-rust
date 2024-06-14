@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Updated `README.md` with a note about `nasm`'s lack of support for Apple silicon, and consequently this crate's
-  lack of support for it.
+- Updated `README.md` with a note about support for Apple silicon, the M-series.
+- Updated `README.md` with a note about `nasm` being required on Windows, but not on macOS with Apple silicon.
 
 ## [0.2.0] - 2024-01-30
 
