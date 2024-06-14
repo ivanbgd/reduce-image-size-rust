@@ -15,11 +15,13 @@ This application reduces file sizes of images in bulk.
 By default, keeps the original images and creates copies with reduced file size.
 
 By default, copies the entire folder tree, with all sub-folders that exist in the source tree.  
-The target folder tree will be created automatically, and the new reduced-size images will be copied properly to their respective paths.  
+The target folder tree will be created automatically,
+and the new reduced-size images will be copied properly to their respective paths.  
 It is only required to provide the root target folder, and it will also be created if it doesn't exist.  
 Non-supported files will simply be copied to the destination.
 
-The destination folder can be the same as the source folder, in which case the original images will be **overwritten**, and not retained.  
+The destination folder can be the same as the source folder, in which case the original images will be **overwritten**,
+and not retained.  
 Other, non-supported files, will be retained.
 
 If there is enough disk space, it is advised to specify a different destination folder than the source folder,
@@ -31,8 +33,10 @@ If satisfied with the result, original images can be deleted afterwards easily t
 ## Options
 - Look into subdirectories recursively (process the entire tree); recommended: `-r`, `--recursive`
 - Reduce both image dimensions by half: `--resize`
-- JPEG quality, on a scale from 1 (worst) to 100 (best); the default is 75; ignored in case of PNGs: `-q`, `--quality <QUALITY>`
-- A minimum file size for which a user would like to perform file size reduction: `-s {s,m,l,S,M,L}`, `--size {s,m,l,S,M,L}`
+- JPEG quality, on a scale from 1 (worst) to 100 (best); the default is 75; ignored in case of PNGs:
+  `-q`, `--quality <QUALITY>`
+- A minimum file size for which a user would like to perform file size reduction:
+  `-s {s,m,l,S,M,L}`, `--size {s,m,l,S,M,L}`
     - S = 100 kB, M = 500 kB, L = 1 MB
     - Files that are smaller than the designated size will simply be copied to the destination folder.
     - If this option is left out, then all files are considered for size reduction; i.e., minimal considered size is 0.
@@ -51,7 +55,10 @@ The file paths in the examples are for Windows.
 - Developed in Rust 1.74.1.
 - Tested on x86-64 CPUs on Windows 10 and Windows 11.
 - Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11.
-- Other OSes haven't been tested, but should work.
+- Other OSes haven't been tested, but should work, at least on x86-64 CPUs.
+- Unfortunately, `nasm`, which is required and used in this project, only supports the x86-64 architecture,
+  as of June 2024.
+  - This means that Apple silicon, that is based on ARM, the M-series, is not supported, unfortunately.
 
 ## Running the Application
 Executable files for Windows, Linux and macOS can be downloaded from
@@ -76,6 +83,9 @@ Paths to the source and destination folders can be absolute or relative.
 ## Building the Application and Running it With cargo
 This section applies in case you don't have an executable and need to build it.  
 It doesn't depend on the OS.
+
+**Note**: `nasm` supports only the x86-64 architecture, and not ARM, so Apple silicon CPUs, the M-series,
+are not supported, unfortunately.
 
 The library and the application require:
 - [CMake](https://cmake.org/download/)

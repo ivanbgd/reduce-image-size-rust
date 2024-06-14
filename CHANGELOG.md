@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2024-06-14
+
+### Changed
+
+- Updated `README.md` with a note about `nasm`'s lack of support for Apple silicon, and consequently this crate's
+  lack of support for it.
+
 ## [0.2.0] - 2024-01-30
 
 ### Added
