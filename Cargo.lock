@@ -571,7 +571,7 @@ dependencies = [
 
 [[package]]
 name = "reduce_image_size"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "clap",
  "fast_image_resize",
