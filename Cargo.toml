@@ -1,6 +1,6 @@
 [package]
 name = "reduce_image_size"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 authors = ["Ivan Lazarević"]
 description = "Reduces size of images in a folder (and optionally sub-folders, recursively)."
@@ -8,6 +8,9 @@ repository = "https://github.com/ivanbgd/reduce-image-size-rust"
 license = "MIT"
 keywords = ["image", "images", "photo", "jpeg", "png"]
 categories = ["computer-vision", "multimedia", "multimedia::images", "command-line-utilities"]
+
+[profile.release]
+strip = "symbols"
 
 [lib]
 path = "src/lib.rs"

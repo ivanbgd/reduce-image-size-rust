@@ -12,7 +12,7 @@ This application reduces file sizes of images in bulk.
 
 Supports JPEG and PNG image formats, with the following file extensions (case-insensitive): `jpg`, `jpeg`, `png`.
 
-Supports Windows, macOS on Apple silicon and Linux.
+Supports Windows, macOS on Apple silicon (ARM) and x86-64, and Linux on ARM and x86-64.
 
 Executable files for Windows, macOS and Linux can be downloaded from
 the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page of the repository.
@@ -57,7 +57,7 @@ The file paths in the examples are for Windows.
 - `reduce_image_size D:\img_src D:\img_dst --recursive --resize --quality 60 --size L`
 
 ## Notes
-- Developed in Rust 1.74.1, but also tested later with Rust 1.77.2.
+- Developed in Rust 1.74.1, but also tested later with Rust 1.79.0.
 - Tested on x86-64 CPUs on Windows 10 and Windows 11.
 - Tested on Apple silicon, M2 Pro, on macOS Sonoma 14.5.
 - Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11 @ x86-64.
