@@ -1,6 +1,6 @@
 [package]
 name = "reduce_image_size"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["Ivan Lazarević"]
 description = "Reduces size of images in a folder (and optionally sub-folders, recursively)."
@@ -21,9 +21,9 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4.0", features = ["derive"] }
-fast_image_resize = "2.7.3"
-image = "0.24.7"
+fast_image_resize = "3.0.4"
+image = "0.24.9"
 oxipng = { version = "9.0", default-features = false, features = ["parallel"] }
-pathdiff = { version="0.2.1" }
-turbojpeg = { version = "0.5", features = ["image"] }
+pathdiff = { version = "0.2.1" }
+turbojpeg = { version = "1.1.0", features = ["image"] }
 walkdir = "2"

@@ -69,9 +69,6 @@ the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page 
 
 Use the latest release version.
 
-The version `0.2.0` contains a macOS binary for the x86-64 architecture.
-Later versions contain a macOS binary for Apple silicon, which is based on ARM.
-
 Download the appropriate archive for your OS and unpack it to a desired folder.
 
 The archive files contain an executable.
