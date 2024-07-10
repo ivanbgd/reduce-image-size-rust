@@ -2,14 +2,14 @@
 
 use std::error::Error;
 use std::fs;
-use std::io::{BufWriter, stdout, StdoutLock, Write};
+use std::io::{stdout, BufWriter, StdoutLock, Write};
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
 use fast_image_resize as fr;
-use image::{ColorType, ImageEncoder};
 use image::codecs::{jpeg::JpegEncoder, png::PngEncoder};
 use image::io::Reader as ImageReader;
+use image::{ColorType, ImageEncoder};
 use oxipng::{optimize_from_memory, Options};
 use pathdiff::diff_paths;
 use walkdir::WalkDir;
@@ -104,7 +104,7 @@ fn get_image_data(
                     src_path.display(),
                     err
                 )
-                .expect("Failed to write to stdout.");
+                    .expect("Failed to write to stdout.");
                 fs::read(src_path)
             }
         },
