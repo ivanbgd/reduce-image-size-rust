@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - Some form of concurrent execution, but this might not be necessary as some
-  crates already use `rayon` and `crossbeam`.
+  dependencies already use `rayon` and `crossbeam`.
 
 ## [0.2.3] - 2024-07-10
 

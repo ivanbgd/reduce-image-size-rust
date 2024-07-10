@@ -3,10 +3,10 @@
 use std::error::Error;
 use std::fs;
 use std::io::{stdout, BufWriter, StdoutLock, Write};
-use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 
 use fast_image_resize as fr;
+use fast_image_resize::ResizeOptions;
 use image::codecs::{jpeg::JpegEncoder, png::PngEncoder};
 use image::io::Reader as ImageReader;
 use image::{ColorType, ImageEncoder};
@@ -35,27 +35,23 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
         .decode()?;
     let width = img.width();
     let height = img.height();
+    let img = &*img.to_rgba8().into_raw();
 
-    let mut src_image = fr::Image::from_vec_u8(
-        NonZeroU32::new(width).expect("Expected NonZeroU32."),
-        NonZeroU32::new(height).expect("Expected NonZeroU32."),
-        img.to_rgba8().into_raw(),
-        fr::PixelType::U8x4,
-    )?;
+    let src_image = fr::images::ImageRef::new(width, height, img, fr::PixelType::U8x4)?;
 
-    let alpha_mul_div = fr::MulDiv::default();
-    alpha_mul_div.multiply_alpha_inplace(&mut src_image.view_mut())?;
+    let dst_width = width / 2;
+    let dst_height = height / 2;
+    let mut dst_image = fr::images::Image::new(dst_width, dst_height, src_image.pixel_type());
 
-    let dst_width = NonZeroU32::new(width / 2).expect("Expected NonZeroU32.");
-    let dst_height = NonZeroU32::new(height / 2).expect("Expected NonZeroU32.");
-    let mut dst_image = fr::Image::new(dst_width, dst_height, src_image.pixel_type());
+    let mut resizer = fr::Resizer::new();
 
-    let mut dst_view = dst_image.view_mut();
+    let resize_options = ResizeOptions {
+        algorithm: fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3),
+        cropping: Default::default(),
+        mul_div_alpha: true,
+    };
 
-    let mut resizer = fr::Resizer::new(fr::ResizeAlg::Convolution(fr::FilterType::Lanczos3));
-    resizer.resize(&src_image.view(), &mut dst_view)?;
-
-    alpha_mul_div.divide_alpha_inplace(&mut dst_view)?;
+    resizer.resize(&src_image, &mut dst_image, &resize_options)?;
 
     let mut result_buf = BufWriter::new(Vec::new());
 
@@ -65,14 +61,14 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
     match extension.to_string_lossy().to_lowercase().as_str() {
         "jpg" | "jpeg" => JpegEncoder::new(&mut result_buf).write_image(
             dst_image.buffer(),
-            dst_width.get(),
-            dst_height.get(),
+            dst_width,
+            dst_height,
             ColorType::Rgba8, // color_type,
         )?,
         "png" => PngEncoder::new(&mut result_buf).write_image(
             dst_image.buffer(),
-            dst_width.get(),
-            dst_height.get(),
+            dst_width,
+            dst_height,
             ColorType::Rgba8,
         )?,
         _ => panic!("Unsupported image format (file extension): {:?}", extension),
