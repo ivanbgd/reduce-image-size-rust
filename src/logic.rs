@@ -292,25 +292,22 @@ pub fn process_images(
         let file_size = src_path.metadata().expect("Expected file metadata.").len();
         let extension = src_path.extension();
 
-        // Copy or skip a file if it's not large enough, or if its extension is not supported,
-        // or if it has no extension at all.
-        if let Some(ext) = extension {
-            if file_size >= min_size {
-                match ext.to_string_lossy().to_lowercase().as_str() {
-                    "jpg" | "jpeg" => {
-                        match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
-                            Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                            Err(err) => copy_or_skip(
-                                src_path,
-                                &dst_path,
-                                different_paths,
-                                &mut lock,
-                                Some(err),
-                                &mut has_error,
-                            ),
-                        }
-                    }
-                    "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
+        // Copy or skip a file if it is not large enough, or has no extension, or if its extension is not supported.
+        if file_size >= min_size && extension.is_some() {
+            // This `allow` saves us a `copy_or_skip` call in terms of lines of code.
+            // Namely, we can handle two cases at once: when file size is too small and when there is no extension,
+            // but clippy doesn't know that so it emits a warning.
+            // There is a commit with refactored code, but it has one more `copy_or_skip` call,
+            // so we decided to revert to the original structure and added skipping of the lint.
+            #[allow(clippy::unnecessary_unwrap)]
+            match extension
+                .expect("Expected a file extension")
+                .to_string_lossy()
+                .to_lowercase()
+                .as_str()
+            {
+                "jpg" | "jpeg" => {
+                    match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
                         Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
                         Err(err) => copy_or_skip(
                             src_path,
@@ -320,25 +317,27 @@ pub fn process_images(
                             Some(err),
                             &mut has_error,
                         ),
-                    },
-                    _ => copy_or_skip(
+                    }
+                }
+                "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
+                    Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
+                    Err(err) => copy_or_skip(
                         src_path,
                         &dst_path,
                         different_paths,
                         &mut lock,
-                        None,
+                        Some(err),
                         &mut has_error,
                     ),
-                }
-            } else {
-                copy_or_skip(
+                },
+                _ => copy_or_skip(
                     src_path,
                     &dst_path,
                     different_paths,
                     &mut lock,
                     None,
                     &mut has_error,
-                );
+                ),
             }
         } else {
             copy_or_skip(
