@@ -4,7 +4,7 @@
 //!
 //! The binary (executable) crate.
 
-use std::io::{stdout, Write};
+use std::io::{Write, stdout};
 use std::path::Path;
 use std::time::Instant;
 

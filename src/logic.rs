@@ -2,15 +2,15 @@
 
 use std::error::Error;
 use std::fs;
-use std::io::{stdout, BufWriter, StdoutLock, Write};
+use std::io::{BufWriter, StdoutLock, Write, stdout};
 use std::path::{Path, PathBuf};
 
 use fast_image_resize as fr;
 use fast_image_resize::ResizeOptions;
+use image::ImageReader;
 use image::codecs::{jpeg::JpegEncoder, png::PngEncoder};
-use image::io::Reader as ImageReader;
-use image::{ColorType, ImageEncoder};
-use oxipng::{optimize_from_memory, Options};
+use image::{ExtendedColorType, ImageEncoder};
+use oxipng::{Options, optimize_from_memory};
 use pathdiff::diff_paths;
 use walkdir::WalkDir;
 
@@ -63,13 +63,13 @@ fn resize_image(src_path: &Path) -> Result<Vec<u8>, Box<dyn Error>> {
             dst_image.buffer(),
             dst_width,
             dst_height,
-            ColorType::Rgba8, // color_type,
+            ExtendedColorType::Rgba8, // color_type,
         )?,
         "png" => PngEncoder::new(&mut result_buf).write_image(
             dst_image.buffer(),
             dst_width,
             dst_height,
-            ColorType::Rgba8,
+            ExtendedColorType::Rgba8,
         )?,
         _ => panic!("Unsupported image format (file extension): {:?}", extension),
     }
@@ -234,6 +234,7 @@ fn copy_or_skip(
 /// * `recursive` - Whether to look into entire directory subtree.
 /// * `resize` - Whether to resize image dimensions.
 /// * `quality` - JPEG image quality. Ignored in case of PNGs.
+/// * `min_size` - Minimal file size for applying size reduction.
 ///
 /// Returns `bool` stating whether there was any error in trying to reduce size of a file or to copy it.
 /// This `bool` can be `true` only in case where source and destination directories are different,
@@ -245,7 +246,7 @@ pub fn process_images(
     recursive: bool,
     resize: bool,
     quality: i32,
-    size: u64,
+    min_size: u64,
 ) -> bool {
     let mut has_error = false;
 
@@ -291,11 +292,25 @@ pub fn process_images(
         let file_size = src_path.metadata().expect("Expected file metadata.").len();
         let extension = src_path.extension();
 
-        // Copy or skip a file if it is not large enough, or has no extension, or if its extension is not supported.
-        if file_size >= size && extension.is_some() {
-            match extension.unwrap().to_string_lossy().to_lowercase().as_str() {
-                "jpg" | "jpeg" => {
-                    match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
+        // Copy or skip a file if it's not large enough, or if its extension is not supported,
+        // or if it has no extension at all.
+        if let Some(ext) = extension {
+            if file_size >= min_size {
+                match ext.to_string_lossy().to_lowercase().as_str() {
+                    "jpg" | "jpeg" => {
+                        match process_jpeg(src_path, &dst_path, resize, quality, &mut lock) {
+                            Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
+                            Err(err) => copy_or_skip(
+                                src_path,
+                                &dst_path,
+                                different_paths,
+                                &mut lock,
+                                Some(err),
+                                &mut has_error,
+                            ),
+                        }
+                    }
+                    "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
                         Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
                         Err(err) => copy_or_skip(
                             src_path,
@@ -305,27 +320,25 @@ pub fn process_images(
                             Some(err),
                             &mut has_error,
                         ),
-                    }
-                }
-                "png" => match process_png(src_path, &dst_path, resize, &mut lock) {
-                    Ok(_) => print_success(src_path, &dst_path, different_paths, &mut lock),
-                    Err(err) => copy_or_skip(
+                    },
+                    _ => copy_or_skip(
                         src_path,
                         &dst_path,
                         different_paths,
                         &mut lock,
-                        Some(err),
+                        None,
                         &mut has_error,
                     ),
-                },
-                _ => copy_or_skip(
+                }
+            } else {
+                copy_or_skip(
                     src_path,
                     &dst_path,
                     different_paths,
                     &mut lock,
                     None,
                     &mut has_error,
-                ),
+                );
             }
         } else {
             copy_or_skip(
