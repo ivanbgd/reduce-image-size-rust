@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Some form of concurrent execution, but this might not be necessary as some
   dependencies already use `rayon` and `crossbeam`.
 
+## [0.2.4] - 2025-09-08
+
+### Changed
+- Updated several dependencies to newer versions.
+  - `cargo audit` found a security vulnerability in a dependency (that version has been yanked).
+
 ## [0.2.3] - 2024-07-10
 
 ### Changed
