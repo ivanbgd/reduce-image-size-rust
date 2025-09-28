@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+#    branches:
+#      - main
   pull_request:
     types: [ opened, reopened, synchronize ]
     branches:
@@ -25,12 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
           toolchain: 1.89.0 # MSRV check
       - uses: ilammy/setup-nasm@v1
-      - uses: Swatinem/rust-cache@v2
       - name: Linting
         run: cargo clippy --all-targets --all-features -- -D warnings
 
@@ -39,10 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - uses: Swatinem/rust-cache@v2
       - name: Enforce formatting
         run: cargo fmt -- --check --color always
 
@@ -51,12 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.89.0 # MSRV check
       - uses: ilammy/setup-nasm@v1
       - run: cargo fetch
-      - uses: Swatinem/rust-cache@v2
       - name: cargo publish dry run
         run: cargo publish --dry-run
 
