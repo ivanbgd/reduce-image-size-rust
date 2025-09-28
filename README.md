@@ -57,7 +57,7 @@ The file paths in the examples are for Windows.
 - `reduce_image_size D:\img_src D:\img_dst --recursive --resize --quality 60 --size L`
 
 ## Notes
-- Updated and tested in Rust 1.89.0 on Apple silicon with macOS Sequoia 15.3.
+- Updated and tested in Rust 1.89.0 and 1.90.0 on Apple silicon with macOS Sequoia 15.3.2.
 - First developed in Rust 1.74.1, but also tested later with Rust 1.79.0.
 - Tested on x86-64 CPUs on Windows 10 and Windows 11.
 - Tested on Apple silicon, M2 Pro, on macOS Sonoma 14.5.

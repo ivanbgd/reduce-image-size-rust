@@ -1,16 +1,15 @@
 [package]
 name = "reduce_image_size"
-version = "0.2.4"
-edition = "2024"
-authors = ["Ivan Lazarević"]
 description = "Reduces size of images in a folder (and optionally sub-folders, recursively)."
+version = "0.2.4"
+authors = ["Ivan Lazarević"]
 repository = "https://github.com/ivanbgd/reduce-image-size-rust"
 license = "MIT"
-keywords = ["image", "images", "photo", "jpeg", "png"]
+readme = "README.md"
 categories = ["computer-vision", "multimedia", "multimedia::images", "command-line-utilities"]
-
-[profile.release]
-strip = "symbols"
+keywords = ["image", "images", "photo", "jpeg", "png"]
+edition = "2024"
+rust-version = "1.89.0"
 
 [lib]
 path = "src/lib.rs"
@@ -27,3 +26,11 @@ oxipng = { version = "9.1.1", default-features = false, features = ["parallel"] 
 pathdiff = { version = "0.2.1" }
 turbojpeg = { version = "1.1.0", features = ["image"] }
 walkdir = "2.5.0"
+
+[profile.dev.package.oxipng]
+opt-level = 3
+
+[profile.release]
+strip = "symbols"
+#lto = "fat"
+#codegen-units = 1
