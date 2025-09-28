@@ -57,7 +57,7 @@ jobs:
       - uses: ilammy/setup-nasm@v1
       - uses: Swatinem/rust-cache@v2
       - run: cargo fetch
-      - name: cargo publish
+      - name: cargo publish dry run
         run: cargo publish --dry-run
 
   test:
