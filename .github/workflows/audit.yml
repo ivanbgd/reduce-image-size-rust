@@ -4,10 +4,10 @@ on:
   #  schedule:
   #    - cron: "0 0 * * *"
   push:
-#    paths:
-#      - "**/Cargo.lock"
-#      - "**/Cargo.toml"
-#      - "**/deny.toml"
+    paths:
+      - "**/Cargo.lock"
+      - "**/Cargo.toml"
+      - "**/deny.toml"
 
 jobs:
 
@@ -35,17 +35,9 @@ jobs:
           command: check
           arguments: --all-features
 
-  cargo-deny-taiki:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: taiki-e/install-action@cargo-deny
-      - name: Scan for vulnerabilities
-        run: cargo deny check advisories
-
   audit-success:
     name: Audit success
     runs-on: ubuntu-latest
-    needs: [audit-check, cargo-deny, cargo-deny-taiki]
+    needs: [audit-check, cargo-deny]
     steps:
       - run: echo "All audit jobs successfully finished."

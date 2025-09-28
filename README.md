@@ -1,8 +1,9 @@
 # Reduce Image Size
 
-[![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/reduce_image_size.svg)](https://crates.io/crates/reduce_image_size)
 [![docs.rs](https://docs.rs/reduce_image_size/badge.svg)](https://docs.rs/reduce_image_size/)
+[![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
+[![Security audit](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml)
 
 ## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
