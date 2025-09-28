@@ -7,8 +7,12 @@ on:
       - "**/Cargo.lock"
 
 jobs:
-  security_audit:
+
+  security-audit:
+    name: Security audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
       - uses: rustsec/audit-check@v2.0.0
