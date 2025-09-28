@@ -5,8 +5,9 @@ on:
   #    - cron: "0 0 * * *"
   push:
 #    paths:
-#      - "**/Cargo.toml"
 #      - "**/Cargo.lock"
+#      - "**/Cargo.toml"
+#      - "**/deny.toml"
 
 jobs:
 
@@ -30,3 +31,6 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@v2
         with:
           rust-version: "1.89.0"
+          log-level: warn
+          command: check
+          arguments: --all-features
