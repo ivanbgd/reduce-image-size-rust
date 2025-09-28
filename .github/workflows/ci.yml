@@ -45,7 +45,7 @@ jobs:
           components: rustfmt
       - uses: Swatinem/rust-cache@v2
       - name: Enforce formatting
-        run: cargo fmt -- --check --color always
+        run: cargo fmt --all -- --check --color always
 
   msrv:
     name: MSRV check
