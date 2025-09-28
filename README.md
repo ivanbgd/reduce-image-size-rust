@@ -80,13 +80,14 @@ The file paths in the examples are for Windows.
 [pre-commit](https://pre-commit.com/) hooks are supported.
 
 ```shell
-$ pip install pre-commit
-$ pre-commit install
-$ pre-commit run  # For manual running; considers only modified files
-$ pre-commit run --all-files  # For manual running; considers all files
+$ pip install pre-commit  # If you don't already have pre-commit installed on your machine. Run once.
+$ pre-commit install  # Sets up the pre-commit git hook script for the repository. Run once.
+$ pre-commit install --hook-type pre-push  # Sets up the pre-push git hook script for the repository. Run once.
+$ pre-commit run  # For manual running; considers only modified files.
+$ pre-commit run --all-files  # For manual running; considers all files.
 ```
 
-After installing it, the provided [pre-commit hook](.pre-commit-config.yaml) will run automatically on `git commit`.
+After installing it, the provided [pre-commit hook(s)](.pre-commit-config.yaml) will run automatically on `git commit`.
 
 ## Running the Application
 Executable files for Windows, macOS and Linux can be downloaded from
