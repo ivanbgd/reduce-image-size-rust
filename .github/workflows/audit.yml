@@ -1,4 +1,5 @@
 name: Security audit
+
 on:
   #  schedule:
   #    - cron: "0 0 * * *"
@@ -6,13 +7,15 @@ on:
 #    paths:
 #      - "**/Cargo.toml"
 #      - "**/Cargo.lock"
-permissions:
-  issues: write
-  checks: write
+
 jobs:
-  security-audit:
-    name: Security audit
+
+  audit-check:
+    name: Audit check
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      checks: write
     steps:
       - uses: actions/checkout@v5
       - uses: rustsec/audit-check@v2.0.0
