@@ -64,7 +64,9 @@ jobs:
       - name: Run tests
         run: cargo test
 
-  cli_success:
-    name: Success
+  ci_success:
+    name: CI success
     runs-on: ubuntu-latest
     needs: [clippy, fmt, test]
+    steps:
+      - run: echo "All CI jobs successfully finished."
