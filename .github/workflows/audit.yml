@@ -12,6 +12,8 @@ jobs:
     name: Security audit
     runs-on: ubuntu-latest
     permissions:
+      issues: write
+      checks: write
       contents: write
     steps:
       - uses: actions/checkout@v5
