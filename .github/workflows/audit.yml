@@ -6,26 +6,16 @@ on:
 #      - "**/Cargo.toml"
 #      - "**/Cargo.lock"
 
-
-github-token:
-  action-input:
-    input: token
-    is-default: false
-  permissions:
-    issues: write
-    issues-reason: to create issues
-    checks: write
-    checks-reason: to create check
+permissions:
+      issues: write
+      checks: write
+      contents: write
 
 jobs:
 
   security-audit:
     name: Security audit
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      checks: write
-      contents: write
     steps:
       - uses: actions/checkout@v5
       - uses: rustsec/audit-check@v2.0.0
