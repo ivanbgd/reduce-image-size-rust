@@ -11,17 +11,17 @@ on:
 
 jobs:
 
-#  audit-check:
-#    name: Audit check
-#    runs-on: ubuntu-latest
-#    permissions:
-#      issues: write
-#      checks: write
-#    steps:
-#      - uses: actions/checkout@v5
-#      - uses: rustsec/audit-check@v2.0.0
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
+  audit-check:
+    name: Audit check
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      checks: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   cargo-deny:
     name: Cargo deny
@@ -46,6 +46,6 @@ jobs:
   audit-success:
     name: Audit success
     runs-on: ubuntu-latest
-    needs: [cargo-deny, cargo-deny-taiki]
+    needs: [audit-check, cargo-deny, cargo-deny-taiki]
     steps:
       - run: echo "All audit jobs successfully finished."
