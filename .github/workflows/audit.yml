@@ -34,3 +34,18 @@ jobs:
           log-level: warn
           command: check
           arguments: --all-features
+
+  cargo-deny-taiki:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: taiki-e/install-action@cargo-deny
+      - name: Scan for vulnerabilities
+        run: cargo deny check advisories
+
+  audit-success:
+    name: Audit success
+    runs-on: ubuntu-latest
+    needs: [cargo-deny, cargo-deny-taiki]
+    steps:
+      - run: echo "All audit jobs successfully finished."
