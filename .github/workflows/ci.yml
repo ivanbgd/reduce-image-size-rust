@@ -55,8 +55,8 @@ jobs:
         with:
           toolchain: 1.89.0 # MSRV check
       - uses: ilammy/setup-nasm@v1
-      - uses: Swatinem/rust-cache@v2
       - run: cargo fetch
+      - uses: Swatinem/rust-cache@v2
       - name: cargo publish dry run
         run: cargo publish --dry-run
 
@@ -64,10 +64,10 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: ilammy/setup-nasm@v1
-
       - name: Check out repository code
         uses: actions/checkout@v5
+
+      - uses: ilammy/setup-nasm@v1
 
       # This GitHub Action installs a Rust toolchain using "rustup".
       # It is designed for one-line concise usage and good defaults.
@@ -79,7 +79,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run tests
-        run: cargo test
+        run: cargo test --all --all-targets
 
   ci-success:
     name: CI success
