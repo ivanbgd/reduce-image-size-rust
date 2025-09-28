@@ -66,6 +66,28 @@ The file paths in the examples are for Windows.
 - Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11 @ x86-64.
 - Linux wasn't tested directly, but should work, at least on x86-64 CPUs.
 
+## Security
+
+- [cargo audit](https://github.com/rustsec/rustsec/blob/main/cargo-audit/README.md) is supported,
+  as well as its GitHub action, [audit-check](https://github.com/rustsec/audit-check).
+- [cargo deny](https://embarkstudios.github.io/cargo-deny/) is supported,
+  as well as its GitHub action, [cargo-deny-action](https://github.com/EmbarkStudios/cargo-deny-action).
+
+## Development
+
+### Pre-commit
+
+[pre-commit](https://pre-commit.com/) hooks are supported.
+
+```shell
+$ pip install pre-commit
+$ pre-commit install
+$ pre-commit run  # For manual running; considers only modified files
+$ pre-commit run --all-files  # For manual running; considers all files
+```
+
+After installing it, the provided [pre-commit hook](.pre-commit-config.yaml) will run automatically on `git commit`.
+
 ## Running the Application
 Executable files for Windows, macOS and Linux can be downloaded from
 the [Releases](https://github.com/ivanbgd/reduce-image-size-rust/releases) page of the repository.

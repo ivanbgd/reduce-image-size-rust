@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.4] - 2025-09-28
 
+### Added
+
+- GitHub action `audit.yml`, with `audit-check` and `cargo-deny-action` actions
+  - `audit.toml` for local and CI `cargo audit` configuration
+  - `deny.toml` for local and CI `cargo deny` configuration
+- Pre-commit hook, `.pre-commit-config.yaml`
+
 ### Changed
 - Updated several dependencies to newer versions.
   - `cargo audit` found a security vulnerability in a dependency (that version has been yanked).
