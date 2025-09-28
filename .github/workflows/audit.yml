@@ -7,9 +7,8 @@ on:
 #      - "**/Cargo.toml"
 #      - "**/Cargo.lock"
 permissions:
-  issues: read
-  checks: read
-  contents: read
+  issues: write
+  checks: write
 jobs:
   security-audit:
     name: Security audit
