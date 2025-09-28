@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-#    branches:
-#      - main
+    branches:
+      - audit
   pull_request:
     types: [ opened, reopened, synchronize ]
     branches:
