@@ -3,9 +3,9 @@ name: CI
 on:
   push:
     branches:
-      - *
+      - "*"
     tags:
-      - *
+      - "*"
   pull_request:
     types: [ opened, reopened, synchronize ]
     branches:
