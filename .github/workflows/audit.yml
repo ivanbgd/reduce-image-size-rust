@@ -10,17 +10,17 @@ on:
 
 jobs:
 
-  audit-check:
-    name: Audit check
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      checks: write
-    steps:
-      - uses: actions/checkout@v5
-      - uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+#  audit-check:
+#    name: Audit check
+#    runs-on: ubuntu-latest
+#    permissions:
+#      issues: write
+#      checks: write
+#    steps:
+#      - uses: actions/checkout@v5
+#      - uses: rustsec/audit-check@v2.0.0
+#        with:
+#          token: ${{ secrets.GITHUB_TOKEN }}
 
   cargo-deny:
     name: Cargo deny
@@ -28,5 +28,5 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: EmbarkStudios/cargo-deny-action@v2
-#        with:
-#          rust-version: "1.89.0"
+        with:
+          rust-version: "1.89.0"
