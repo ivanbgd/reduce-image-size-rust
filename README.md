@@ -82,6 +82,7 @@ The file paths in the examples are for Windows.
 
 ```shell
 $ pip install pre-commit  # If you don't already have pre-commit installed on your machine. Run once.
+$ pre-commit autoupdate  # Update hook repositories to the latest versions.
 $ pre-commit install  # Sets up the pre-commit git hook script for the repository. Run once.
 $ pre-commit install --hook-type pre-push  # Sets up the pre-push git hook script for the repository. Run once.
 $ pre-commit run  # For manual running; considers only modified files.
