@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub action `audit.yml`, with `audit-check` and `cargo-deny-action` actions
   - `audit.toml` for local and CI `cargo audit` configuration
   - `deny.toml` for local and CI `cargo deny` configuration
-- Pre-commit hook, `.pre-commit-config.yaml`
+- Pre-commit hooks, `.pre-commit-config.yaml`
 
 ### Changed
 - Updated several dependencies to newer versions.
