@@ -95,6 +95,6 @@ jobs:
   ci-success:
     name: CI success
     runs-on: ubuntu-latest
-    needs: [clippy, fmt, publish-check, test]
+    needs: [clippy, fmt, msrv, publish-check, test]
     steps:
       - run: echo "All CI jobs successfully finished."
