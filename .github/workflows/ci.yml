@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
+#    branches:
+#      - main
   pull_request:
     types: [ opened, reopened, synchronize ]
     branches:
@@ -42,8 +42,20 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+      - uses: Swatinem/rust-cache@v2
       - name: Enforce formatting
         run: cargo fmt -- --check --color always
+
+  publish-check:
+    name: Publish check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fetch
+      - name: cargo publish
+        run: cargo publish --dry-run
 
   test:
     name: Test
@@ -69,6 +81,6 @@ jobs:
   ci-success:
     name: CI success
     runs-on: ubuntu-latest
-    needs: [clippy, fmt, test]
+    needs: [clippy, fmt, publish-check, test]
     steps:
       - run: echo "All CI jobs successfully finished."
