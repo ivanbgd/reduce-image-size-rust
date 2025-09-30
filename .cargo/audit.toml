@@ -1,0 +1,10 @@
+[advisories]
+ignore = [
+    # Warning:   unmaintained
+    # Title:     paste - no longer maintained
+    "RUSTSEC-2024-0436",
+]
+
+[output]
+quiet = false
+deny = ["warnings", "unmaintained"]

@@ -1,8 +1,11 @@
 # Reduce Image Size
 
-[![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
 [![Crates.io](https://img.shields.io/crates/v/reduce_image_size.svg)](https://crates.io/crates/reduce_image_size)
 [![docs.rs](https://docs.rs/reduce_image_size/badge.svg)](https://docs.rs/reduce_image_size/)
+[![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
+[![Security audit](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 ## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
@@ -57,12 +60,36 @@ The file paths in the examples are for Windows.
 - `reduce_image_size D:\img_src D:\img_dst --recursive --resize --quality 60 --size L`
 
 ## Notes
-- Updated and tested in Rust 1.89.0 on Apple silicon with macOS Sequoia 15.3.
+- Updated and tested in Rust 1.89.0 and 1.90.0 on Apple silicon with macOS Sequoia 15.3.2.
 - First developed in Rust 1.74.1, but also tested later with Rust 1.79.0.
 - Tested on x86-64 CPUs on Windows 10 and Windows 11.
 - Tested on Apple silicon, M2 Pro, on macOS Sonoma 14.5.
 - Also tested on WSL - Ubuntu 22.04.2 LTS (GNU/Linux 5.15.133.1-microsoft-standard-WSL2 x86_64) on Windows 11 @ x86-64.
 - Linux wasn't tested directly, but should work, at least on x86-64 CPUs.
+
+## Security
+
+- [cargo audit](https://github.com/rustsec/rustsec/blob/main/cargo-audit/README.md) is supported,
+  as well as its GitHub action, [audit-check](https://github.com/rustsec/audit-check).
+- [cargo deny](https://embarkstudios.github.io/cargo-deny/) is supported,
+  as well as its GitHub action, [cargo-deny-action](https://github.com/EmbarkStudios/cargo-deny-action).
+
+## Development
+
+### Pre-commit
+
+[pre-commit](https://pre-commit.com/) hooks are supported.
+
+```shell
+$ pip install pre-commit  # If you don't already have pre-commit installed on your machine. Run once.
+$ pre-commit autoupdate  # Update hook repositories to the latest versions.
+$ pre-commit install  # Sets up the pre-commit git hook script for the repository. Run once.
+$ pre-commit install --hook-type pre-push  # Sets up the pre-push git hook script for the repository. Run once.
+$ pre-commit run  # For manual running; considers only modified files.
+$ pre-commit run --all-files  # For manual running; considers all files.
+```
+
+After installing it, the provided [pre-commit hook(s)](.pre-commit-config.yaml) will run automatically on `git commit`.
 
 ## Running the Application
 Executable files for Windows, macOS and Linux can be downloaded from

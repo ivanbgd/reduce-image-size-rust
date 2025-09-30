@@ -1,0 +1,47 @@
+repos:
+
+  - repo: local
+    hooks:
+      - id: check
+        name: check
+        description: Standard check
+        entry: cargo check
+        language: system
+        types: [ rust ]
+        pass_filenames: false
+
+      - id: clippy
+        name: clippy
+        description: More rigorous check
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        language: rust
+        pass_filenames: false
+
+      - id: rustfmt
+        name: rustfmt
+        description: Check if all files follow the rustfmt style
+        entry: cargo fmt --all -- --check --color always
+        language: rust
+        types: [ rust ]
+        pass_filenames: false
+
+      - id: test
+        name: test
+        description: Run tests
+        entry: cargo test --all --all-targets
+        language: rust
+        types: [ rust ]
+        pass_filenames: false
+
+  - repo: https://github.com/EmbarkStudios/cargo-deny
+    rev: 0.18.5
+    hooks:
+      - id: cargo-deny
+        args: ["--all-features", "check"]
+
+  -   repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v6.0.0
+      hooks:
+        -   id: check-added-large-files
+        -   id: check-yaml
+        -   id: end-of-file-fixer
