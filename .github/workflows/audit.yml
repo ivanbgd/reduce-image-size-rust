@@ -1,13 +1,17 @@
 name: Security audit
 
 on:
-  #  schedule:
-  #    - cron: "0 0 * * *"
   push:
     paths:
       - "**/Cargo.lock"
       - "**/Cargo.toml"
       - "**/deny.toml"
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+    branches:
+      - main
+  #  schedule:
+  #    - cron: "0 0 * * *"
 
 jobs:
 
