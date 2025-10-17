@@ -1,11 +1,14 @@
 # Reduce Image Size
 
 [![license](https://img.shields.io/badge/License-MIT-blue.svg?style=flat)](LICENSE)
-[![Crates.io](https://img.shields.io/crates/v/reduce_image_size.svg)](https://crates.io/crates/reduce_image_size)
+[![crates.io](https://img.shields.io/crates/v/reduce_image_size)][crates.io link]
+[![downloads](https://img.shields.io/crates/d/reduce_image_size.svg)][crates.io link]  
 [![docs.rs](https://docs.rs/reduce_image_size/badge.svg)](https://docs.rs/reduce_image_size/)
 [![CI](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/ci.yml)
-[![Security audit](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml)
+[![Security audit](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml/badge.svg)](https://github.com/ivanbgd/reduce-image-size-rust/actions/workflows/audit.yml)  
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+[crates.io link]: https://crates.io/crates/reduce_image_size
 
 ## Description
 Reduces size of images in a folder (and optionally sub-folders, recursively).
